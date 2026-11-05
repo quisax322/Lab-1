@@ -1,0 +1,10 @@
+set 0 65
+set 1 66
+set 2 0
+get 0
+get 1
+get 2
+set 5000 1
+set 0 300
+dump
+quit

@@ -1,7 +1,14 @@
 build/
+.vs/
+out/
 .idea/
 .vscode/
 *.o
 *.dSYM/
+*.tmp
+*.temp
+*~
+.env
+.env.*
 scratch
 scratch.cpp

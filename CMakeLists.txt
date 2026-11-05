@@ -5,8 +5,64 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    add_compile_options(/W4 /WX /EHsc /utf-8)
+    add_link_options(/WX)
+    # MSVC supports ASan, but not UBSan. /RTC1 is incompatible with ASan.
+    option(EMBER_MSVC_ASAN "Use AddressSanitizer in MSVC Debug builds" ON)
+    if(EMBER_MSVC_ASAN)
+        string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        add_compile_options($<$<CONFIG:Debug>:/Zi>)
+        add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO>)
+        add_link_options($<$<CONFIG:Debug>:/DEBUG>)
+        get_filename_component(compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        find_file(asan_runtime clang_rt.asan_dynamic-x86_64.dll
+                  PATHS "${compiler_dir}" NO_DEFAULT_PATH)
+        if(NOT asan_runtime)
+            message(FATAL_ERROR "MSVC x64 ASan runtime missing; install ASan or set EMBER_MSVC_ASAN=OFF")
+        endif()
+    endif()
+else()
+    add_compile_options(-Wall -Wextra -Werror)
+    add_compile_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>
+                        $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+    add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+endif()
+
 add_executable(ember
     src/main.cpp
     src/memory.cpp
     src/dump.cpp
+    src/alu.cpp
+    src/cpu.cpp
 )
+
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(ember_tests tests/test_ember.cpp
+                   src/alu.cpp src/cpu.cpp src/memory.cpp)
+    target_include_directories(ember_tests PRIVATE src)
+    add_test(NAME alu_cpu_memory COMMAND ember_tests)
+
+    foreach(check IN ITEMS lab-01 lab-02 lab-02-and lab-02-trace lab-02-input)
+        add_test(NAME ${check}
+            COMMAND ${CMAKE_COMMAND}
+                -DEMBER=$<TARGET_FILE:ember>
+                -DCHECK=${check}
+                -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+                -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_cli.cmake)
+    endforeach()
+endif()
+
+if(MSVC AND EMBER_MSVC_ASAN)
+    foreach(target IN ITEMS ember ember_tests)
+        if(TARGET ${target})
+            add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${asan_runtime}" "$<TARGET_FILE_DIR:${target}>"
+                VERBATIM)
+        endif()
+    endforeach()
+endif()

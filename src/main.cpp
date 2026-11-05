@@ -12,6 +12,7 @@
 
 #include "dump.hpp"
 #include "memory.hpp"
+#include "cpu.hpp"
 
 // Turn a word into a number. Accepts decimal (65) and hex (0x41).
 // Returns false if the word is not a number at all.
@@ -31,14 +32,20 @@ static void print_help() {
               << "  dump              print all " << MEM_SIZE << " bytes\n"
               << "  get <addr>        show one byte four ways\n"
               << "  set <addr> <val>  write one byte (dec or 0x hex)\n"
+              << "  inc <addr>        increment one memory byte (wraps at 255)\n"
+              << "  reg <a|b> <val>   set a CPU register (0..255)\n"
+              << "  regs              show PC A B Z N C\n"
+              << "  step              execute one instruction\n"
               << "  help              this list\n"
               << "  quit              leave\n";
 }
 
 int main() {
     Memory mem;  // 4096 bytes, on the stack, zeroed by the {} in memory.hpp
+    CPU cpu;
+    cpu.mem = &mem;
 
-    std::cout << "ember 0.1 - 4096 bytes of memory you can see. Type `help`.\n";
+    std::cout << "ember 0.2 - memory, ALU and CPU. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -64,6 +71,37 @@ int main() {
             print_help();
         } else if (cmd == "dump") {
             dump(mem);
+        } else if (cmd == "regs") {
+            dump_regs(cpu);
+        } else if (cmd == "step") {
+            step(cpu);
+        } else if (cmd == "reg") {
+            std::string r, v;
+            long value = 0;
+            if (!(words >> r) || !(words >> v) || !parse_number(v, value) ||
+                value < 0 || value > 255) {
+                std::cout << "usage: reg <a|b> <0..255>\n";
+            } else if (r == "a") {
+                cpu.a = static_cast<Byte>(value);
+            } else if (r == "b") {
+                cpu.b = static_cast<Byte>(value);
+            } else {
+                std::cout << "unknown register: " << r << '\n';
+            }
+        } else if (cmd == "inc") {
+            std::string a;
+            long addr = 0;
+            if (!(words >> a) || !parse_number(a, addr)) {
+                std::cout << "usage: inc <addr>\n";
+            } else if (addr < 0) {
+                std::cout << "address must not be negative\n";
+            } else if (static_cast<std::size_t>(addr) >= MEM_SIZE) {
+                std::cout << "address " << addr << " is outside 0.." << MEM_SIZE - 1
+                          << '\n';
+            } else {
+                const auto address = static_cast<std::size_t>(addr);
+                mem_set(mem, address, static_cast<Byte>(mem_get(mem, address) + 1));
+            }
         } else if (cmd == "get") {
             std::string a;
             long addr = 0;

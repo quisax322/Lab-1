@@ -1,0 +1,9 @@
+reg a 7
+reg b 1
+set 0 0x12
+set 1 0x00
+step
+regs
+step
+regs
+quit

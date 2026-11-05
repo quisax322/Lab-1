@@ -1,0 +1,29 @@
+reg a 0xFF
+reg b 0
+reg a -1
+reg a 256
+reg a rubbish
+reg a 999999999999999999999999999999
+reg a
+reg c 12
+set -1 5
+get -1
+get 4096
+set 4095 0x7E
+get 4095
+set 4096 9
+set 0 0x19
+set 1 0x00
+regs
+step
+regs
+step
+step
+regs
+set 10 255
+inc 10
+get 10
+inc -1
+inc 4096
+inc
+quit

@@ -1,0 +1,11 @@
+reg a 200
+reg b 100
+set 0 0x10
+set 1 0x00
+regs
+step
+regs
+step
+step
+regs
+quit

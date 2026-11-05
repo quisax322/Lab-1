@@ -1,0 +1,19 @@
+reg a 64
+reg b 1
+set 0 0x16
+set 1 0x16
+set 2 0x18
+set 3 0x00
+set 4 0x19
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+quit
