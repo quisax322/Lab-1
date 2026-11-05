@@ -32,10 +32,13 @@ static void print_help() {
               << "  dump              print all " << MEM_SIZE << " bytes\n"
               << "  get <addr>        show one byte four ways\n"
               << "  set <addr> <val>  write one byte (dec or 0x hex)\n"
+              << "  get16 <addr>      read a little-endian word\n"
+              << "  set16 <addr> <v>  write a little-endian word (0..65535)\n"
               << "  inc <addr>        increment one memory byte (wraps at 255)\n"
               << "  reg <a|b> <val>   set a CPU register (0..255)\n"
-              << "  regs              show PC A B Z N C\n"
+              << "  regs              show PC A B Z N C H\n"
               << "  step              execute one instruction\n"
+              << "  run [limit]       execute to HALT/error (default 1000000 steps)\n"
               << "  help              this list\n"
               << "  quit              leave\n";
 }
@@ -45,7 +48,7 @@ int main() {
     CPU cpu;
     cpu.mem = &mem;
 
-    std::cout << "ember 0.2 - memory, ALU and CPU. Type `help`.\n";
+    std::cout << "ember 0.3 - memory, ALU, CPU and pointers. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -75,6 +78,33 @@ int main() {
             dump_regs(cpu);
         } else if (cmd == "step") {
             step(cpu);
+        } else if (cmd == "run") {
+            std::string limit_word, extra;
+            long limit = 1000000;
+            if ((words >> limit_word && (!parse_number(limit_word, limit) || limit <= 0)) ||
+                (words >> extra)) {
+                std::cout << "usage: run [positive instruction limit]\n";
+            } else {
+                run(cpu, static_cast<std::size_t>(limit));
+                std::cout << '\n';
+            }
+        } else if (cmd == "get16" || cmd == "set16") {
+            std::string a, v, extra;
+            long addr = 0, value = 0;
+            if (!(words >> a) || !parse_number(a, addr) ||
+                (cmd == "set16" && (!(words >> v) || !parse_number(v, value))) ||
+                (words >> extra)) {
+                std::cout << "usage: " << cmd << " <addr>"
+                          << (cmd == "set16" ? " <0..65535>" : "") << '\n';
+            } else if (addr < 0 || static_cast<std::size_t>(addr) >= MEM_SIZE - 1) {
+                std::cout << "word address must be 0..4094\n";
+            } else if (cmd == "set16" && (value < 0 || value > 65535)) {
+                std::cout << "a word is 0..65535\n";
+            } else if (cmd == "set16") {
+                set16(mem, static_cast<std::size_t>(addr), static_cast<std::uint16_t>(value));
+            } else {
+                std::cout << get16(mem, static_cast<std::size_t>(addr)) << '\n';
+            }
         } else if (cmd == "reg") {
             std::string r, v;
             long value = 0;

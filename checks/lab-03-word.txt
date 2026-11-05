@@ -1,0 +1,17 @@
+set16 0 0x1234
+get16 0
+dump
+set16 4094 0xABCD
+get16 4094
+set16 4095 1
+get16 4095
+set16 -1 0
+set16 0 65536
+set16 0 -1
+set16 x 1
+get16 x
+set16 0
+get16 0 extra
+get16 4094
+get 4095
+quit

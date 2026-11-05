@@ -81,9 +81,12 @@ static void test_alu() {
 }
 
 static void test_cpu() {
-    // Check all opcode bytes: this catches group/index aliases and makes sure
-    // future instructions remain NOPs as specified by the given Lab 02 form.
+    // Lab 02 and unimplemented bytes retain their original behavior.
+    // New Lab 03 opcodes have separate tests with multi-byte operands.
     for (unsigned op = 0; op < 256; ++op) {
+        if (op == 0x02 || op == 0x03 || (op >= 0x20 && op <= 0x2C)) {
+            continue;
+        }
         for (unsigned initial_flags = 0; initial_flags < 8; ++initial_flags) {
             Memory mem;
             mem.data[31] = static_cast<Byte>(op);

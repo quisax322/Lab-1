@@ -1,0 +1,15 @@
+set 2048 65
+set 2049 66
+set 2050 0
+set 0 0x28
+set 1 0x00
+set 2 0x08
+set 3 0x29
+set 4 0x02
+set 5 0x2B
+set 6 0x29
+set 7 0x02
+set 8 0x00
+run
+regs
+quit

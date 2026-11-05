@@ -12,3 +12,18 @@ out/
 .env.*
 scratch
 scratch.cpp
+
+# Compiled artifacts and temporary logs
+*.obj
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.log
+
+# Keep only the permanent Lab 03 experiment evidence in Git.
+evidence/*
+!evidence/asan-report.txt
+!evidence/asan-report.txt.exit.txt
+!evidence/asan-fixed.txt
+!evidence/pointer-experiments.txt

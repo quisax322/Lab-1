@@ -1,0 +1,11 @@
+x=65 *p=65
+&x=0000001BF70FF410 p=0000001BF70FF410 &p=0000001BF70FF420
+after *p=66: x=66
+nullptr check=1
+sizeof(p)=8 sizeof(*p)=4 sizeof(void*)=8
+int elements=10 20 30 distance=1 bytes per step=4
+char next=B distance=1 bytes per step=1
+void* roundtrip=1 value=66
+after inc_copy=1
+after inc_ptr=2
+float bits via memcpy=0x3f800000

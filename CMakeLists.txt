@@ -45,7 +45,24 @@ if(BUILD_TESTING)
     target_include_directories(ember_tests PRIVATE src)
     add_test(NAME alu_cpu_memory COMMAND ember_tests)
 
-    foreach(check IN ITEMS lab-01 lab-02 lab-02-and lab-02-trace lab-02-input)
+    add_executable(lab03_tests tests/test_lab03.cpp src/alu.cpp src/cpu.cpp src/memory.cpp)
+    target_include_directories(lab03_tests PRIVATE src)
+    add_test(NAME lab03_memory_cpu COMMAND lab03_tests)
+
+    add_executable(pointer_experiments tests/pointer_experiments.cpp)
+    add_test(NAME pointer_experiments COMMAND pointer_experiments)
+
+    add_executable(bounds_fixed tests/asan_oob.cpp)
+    target_include_directories(bounds_fixed PRIVATE src)
+    add_test(NAME asan_bounds_fixed COMMAND bounds_fixed)
+
+    # Explicit opt-in target: not part of the normal build or CTest.
+    add_executable(asan_oob EXCLUDE_FROM_ALL tests/asan_oob.cpp)
+    target_include_directories(asan_oob PRIVATE src)
+    target_compile_definitions(asan_oob PRIVATE EMBER_ASAN_DEMO_UNSAFE)
+
+    foreach(check IN ITEMS lab-01 lab-02 lab-02-and lab-02-trace lab-02-input
+                           lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit)
         add_test(NAME ${check}
             COMMAND ${CMAKE_COMMAND}
                 -DEMBER=$<TARGET_FILE:ember>
@@ -57,7 +74,7 @@ if(BUILD_TESTING)
 endif()
 
 if(MSVC AND EMBER_MSVC_ASAN)
-    foreach(target IN ITEMS ember ember_tests)
+    foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
