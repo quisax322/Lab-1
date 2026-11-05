@@ -27,3 +27,6 @@ evidence/*
 !evidence/asan-report.txt.exit.txt
 !evidence/asan-fixed.txt
 !evidence/pointer-experiments.txt
+
+# Permanent Lab 04 validation evidence.
+!evidence/lab-04-*.txt

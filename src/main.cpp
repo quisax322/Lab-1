@@ -36,9 +36,10 @@ static void print_help() {
               << "  set16 <addr> <v>  write a little-endian word (0..65535)\n"
               << "  inc <addr>        increment one memory byte (wraps at 255)\n"
               << "  reg <a|b> <val>   set a CPU register (0..255)\n"
+              << "  find <lo> <hi> <byte>  first match in [lo, hi)\n"
               << "  regs              show PC A B Z N C H\n"
               << "  step              execute one instruction\n"
-              << "  run [limit]       execute to HALT/error (default 1000000 steps)\n"
+              << "  run [limit]       execute to HALT/error (default 100000 steps)\n"
               << "  help              this list\n"
               << "  quit              leave\n";
 }
@@ -48,7 +49,7 @@ int main() {
     CPU cpu;
     cpu.mem = &mem;
 
-    std::cout << "ember 0.3 - memory, ALU, CPU and pointers. Type `help`.\n";
+    std::cout << "ember 0.4 - conditions, loops and search. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -80,13 +81,34 @@ int main() {
             step(cpu);
         } else if (cmd == "run") {
             std::string limit_word, extra;
-            long limit = 1000000;
+            long limit = 100000;
             if ((words >> limit_word && (!parse_number(limit_word, limit) || limit <= 0)) ||
                 (words >> extra)) {
                 std::cout << "usage: run [positive instruction limit]\n";
             } else {
                 run(cpu, static_cast<std::size_t>(limit));
                 std::cout << '\n';
+            }
+        } else if (cmd == "find") {
+            std::string l, h, v, extra;
+            long lo = 0, hi = 0, value = 0;
+            if (!(words >> l >> h >> v) || !parse_number(l, lo) ||
+                !parse_number(h, hi) || !parse_number(v, value) || (words >> extra)) {
+                std::cout << "usage: find <lo> <hi> <byte>\n";
+            } else if (lo < 0 || hi < lo || static_cast<std::size_t>(hi) > MEM_SIZE) {
+                std::cout << "find range must satisfy 0 <= lo <= hi <= 4096\n";
+            } else if (value < 0 || value > 255) {
+                std::cout << "a byte is 0..255\n";
+            } else {
+                const auto end = static_cast<std::size_t>(hi);
+                const auto found = find_byte(mem, static_cast<std::size_t>(lo), end,
+                                             static_cast<Byte>(value));
+                if (found == end) {
+                    std::cout << "not found\n";
+                } else {
+                    std::cout << "found address=" << found << " index="
+                              << found - static_cast<std::size_t>(lo) << '\n';
+                }
             }
         } else if (cmd == "get16" || cmd == "set16") {
             std::string a, v, extra;

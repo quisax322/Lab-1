@@ -1,0 +1,72 @@
+Console output; trailing whitespace trimmed for Git. Exact OUTN spacing is checked by automated tests.
+
+Countdown trace: PC(before) -> PC(after), A(after), Z(after)
+0 -> 2 A=3 Z=0
+2 -> 3 A=3 Z=0
+3 -> 4 A=2 Z=0
+4 -> 2 A=2 Z=0
+2 -> 3 A=2 Z=0
+3 -> 4 A=1 Z=0
+4 -> 2 A=1 Z=0
+2 -> 3 A=1 Z=0
+3 -> 4 A=0 Z=1
+4 -> 7 A=0 Z=1
+7 -> 8 A=0 Z=1
+Countdown output: 3 2 1
+PASS Lab 04: 1574360 checks
+
+Official countdown CLI output:
+ember 0.4 - conditions, loops and search. Type `help`.
+ember> ember> ember> ember> ember> ember> ember> ember> ember> 3 2 1
+ember> PC=8 A=0 B=0 Z=1 N=0 C=0 H=0
+ember>
+
+Guest search with match:
+ember 0.4 - conditions, loops and search. Type `help`.
+ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> found address=2050 index=2
+ember> 2
+ember> PC=24 A=2 B=65 Z=1 N=0 C=0 H=2050
+ember>
+
+Guest search without match (0x41 at 0x808 is excluded):
+ember 0.4 - conditions, loops and search. Type `help`.
+ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> ember> not found
+ember> 255
+ember> PC=28 A=255 B=8 Z=1 N=0 C=0 H=2056
+ember>
+
+assignment_experiment:
+yes 1
+after assignment zero: 0
+comparison true
+
+control_experiments:
+A
+AB
+B
+BA
+null guard=0
+logical=1 bitwise=0
+12
+if one
+else nonzero
+while=0
+do-while=1
+for=0 1 2
+while countdown=3 2 1
+
+scope_experiments:
+10 1
+1
+1 1
+2 1
+3 1
+
+Git state after implementation, before the Lab 04 submission commit:
+e3a8a456a2d46d0ffc41cdd2dd18321ee6dd97bd
+e3a8a456a2d46d0ffc41cdd2dd18321ee6dd97bd
+69e64245cbad3e1ff0618f75071424642d419f5a
+At the implementation checkpoint no commits, tags or pushes had been performed. Published lab-03 was confirmed via git ls-remote before edits.
+
+Official lab-04 script comparison with local course materials:
+Equal: True

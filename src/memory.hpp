@@ -17,4 +17,7 @@ bool mem_set(Memory& mem, std::size_t addr, Byte value);
 std::uint16_t get16(const Memory& mem, std::size_t addr);
 bool set16(Memory& mem, std::size_t addr, std::uint16_t value);
 
+// First match in [lo, hi), or hi. Invalid ranges throw std::out_of_range.
+std::size_t find_byte(const Memory& mem, std::size_t lo, std::size_t hi, Byte needle);
+
 #endif

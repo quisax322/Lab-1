@@ -1,0 +1,32 @@
+Console output; trailing whitespace trimmed for Git. Exact OUTN spacing is checked by automated tests.
+
+CMake is re-running because C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/build/CMakeFiles/generate.stamp is out-of-date.
+  the file 'C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/CMakeLists.txt'
+  is newer than 'C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/build/CMakeFiles/generate.stamp.depend'
+  result='-1'
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26300.
+-- Configuring done (0.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/build
+Версия MSBuild 18.10.1-1.26427.6+3cd27c13e для .NET Framework
+
+  assignment_experiment.cpp
+C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\assignment_experiment.cpp(5,11): warning C4706: назначение, используемое в качестве условия [C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\assignment_experiment.vcxproj]
+      C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\assignment_experiment.cpp(5,11):
+      если назначение предназначено, его можно заключить в круглые скобки "(e1 = e2)", чтобы отключить это предупреждение
+
+C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\assignment_experiment.cpp(7,11): warning C4706: назначение, используемое в качестве условия [C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\assignment_experiment.vcxproj]
+      C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\assignment_experiment.cpp(7,11):
+      если назначение предназначено, его можно заключить в круглые скобки "(e1 = e2)", чтобы отключить это предупреждение
+
+  assignment_experiment.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\assignment_experiment.exe
+  bounds_fixed.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\bounds_fixed.exe
+  control_experiments.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\control_experiments.exe
+  ember.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\ember.exe
+  ember_tests.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\ember_tests.exe
+  lab03_tests.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\lab03_tests.exe
+  test_lab04.cpp
+  lab04_tests.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\lab04_tests.exe
+  pointer_experiments.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\pointer_experiments.exe
+  scope_experiments.cpp
+  scope_experiments.vcxproj -> C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\build\Debug\scope_experiments.exe

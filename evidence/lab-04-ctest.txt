@@ -1,0 +1,57 @@
+Test project C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/build
+      Start  1: alu_cpu_memory
+ 1/26 Test  #1: alu_cpu_memory ...................   Passed    0.06 sec
+      Start  2: lab03_memory_cpu
+ 2/26 Test  #2: lab03_memory_cpu .................   Passed    0.05 sec
+      Start  3: lab04_control_search
+ 3/26 Test  #3: lab04_control_search .............   Passed    0.09 sec
+      Start  4: assignment_experiment
+ 4/26 Test  #4: assignment_experiment ............   Passed    0.06 sec
+      Start  5: control_experiments
+ 5/26 Test  #5: control_experiments ..............   Passed    0.06 sec
+      Start  6: scope_experiments
+ 6/26 Test  #6: scope_experiments ................   Passed    0.06 sec
+      Start  7: pointer_experiments
+ 7/26 Test  #7: pointer_experiments ..............   Passed    0.02 sec
+      Start  8: asan_bounds_fixed
+ 8/26 Test  #8: asan_bounds_fixed ................   Passed    0.04 sec
+      Start  9: lab-01
+ 9/26 Test  #9: lab-01 ...........................   Passed    0.11 sec
+      Start 10: lab-02
+10/26 Test #10: lab-02 ...........................   Passed    0.06 sec
+      Start 11: lab-02-and
+11/26 Test #11: lab-02-and .......................   Passed    0.06 sec
+      Start 12: lab-02-trace
+12/26 Test #12: lab-02-trace .....................   Passed    0.06 sec
+      Start 13: lab-02-input
+13/26 Test #13: lab-02-input .....................   Passed    0.06 sec
+      Start 14: lab-03
+14/26 Test #14: lab-03 ...........................   Passed    0.06 sec
+      Start 15: lab-03-h
+15/26 Test #15: lab-03-h .........................   Passed    0.09 sec
+      Start 16: lab-03-trace
+16/26 Test #16: lab-03-trace .....................   Passed    0.09 sec
+      Start 17: lab-03-absolute
+17/26 Test #17: lab-03-absolute ..................   Passed    0.09 sec
+      Start 18: lab-03-word
+18/26 Test #18: lab-03-word ......................   Passed    0.10 sec
+      Start 19: lab-03-limit
+19/26 Test #19: lab-03-limit .....................   Passed    0.06 sec
+      Start 20: lab-04
+20/26 Test #20: lab-04 ...........................   Passed    0.06 sec
+      Start 21: lab-04-trace
+21/26 Test #21: lab-04-trace .....................   Passed    0.06 sec
+      Start 22: lab-04-find
+22/26 Test #22: lab-04-find ......................   Passed    0.06 sec
+      Start 23: lab-04-search-found
+23/26 Test #23: lab-04-search-found ..............   Passed    0.06 sec
+      Start 24: lab-04-search-missing
+24/26 Test #24: lab-04-search-missing ............   Passed    0.06 sec
+      Start 25: lab-04-unknown
+25/26 Test #25: lab-04-unknown ...................   Passed    0.06 sec
+      Start 26: lab-04-limit
+26/26 Test #26: lab-04-limit .....................   Passed    0.06 sec
+
+100% tests passed, 0 tests failed out of 26
+
+Total Test time (real) =   1.81 sec

@@ -81,10 +81,10 @@ static void test_alu() {
 }
 
 static void test_cpu() {
-    // Lab 02 and unimplemented bytes retain their original behavior.
+    // Preserve Lab 02 opcodes; unknown-as-NOP is superseded by Lab 04 M1.
     // New Lab 03 opcodes have separate tests with multi-byte operands.
     for (unsigned op = 0; op < 256; ++op) {
-        if (op == 0x02 || op == 0x03 || (op >= 0x20 && op <= 0x2C)) {
+        if (!(op == 0x00 || op == 0x01 || (op >= 0x10 && op <= 0x19))) {
             continue;
         }
         for (unsigned initial_flags = 0; initial_flags < 8; ++initial_flags) {

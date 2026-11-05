@@ -49,6 +49,26 @@ if(BUILD_TESTING)
     target_include_directories(lab03_tests PRIVATE src)
     add_test(NAME lab03_memory_cpu COMMAND lab03_tests)
 
+    add_executable(lab04_tests tests/test_lab04.cpp src/alu.cpp src/cpu.cpp src/memory.cpp)
+    target_include_directories(lab04_tests PRIVATE src)
+    add_test(NAME lab04_control_search COMMAND lab04_tests)
+
+    foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments)
+        add_executable(${experiment} tests/${experiment}.cpp)
+        add_test(NAME ${experiment}
+            COMMAND ${CMAKE_COMMAND} -DEXPERIMENT=$<TARGET_FILE:${experiment}>
+                -DCHECK=${experiment} -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_experiments.cmake)
+    endforeach()
+    # Only this isolated Notes experiment allows assignment-in-condition warnings.
+    if(MSVC)
+        target_compile_options(assignment_experiment PRIVATE /WX-)
+        # The subject of this experiment is intentional local-name shadowing.
+        target_compile_options(scope_experiments PRIVATE /wd4456)
+    else()
+        target_compile_options(assignment_experiment PRIVATE -Wno-error=parentheses)
+    endif()
+
     add_executable(pointer_experiments tests/pointer_experiments.cpp)
     add_test(NAME pointer_experiments COMMAND pointer_experiments)
 
@@ -62,7 +82,9 @@ if(BUILD_TESTING)
     target_compile_definitions(asan_oob PRIVATE EMBER_ASAN_DEMO_UNSAFE)
 
     foreach(check IN ITEMS lab-01 lab-02 lab-02-and lab-02-trace lab-02-input
-                           lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit)
+                           lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit
+                           lab-04 lab-04-trace lab-04-find lab-04-search-found lab-04-search-missing
+                           lab-04-unknown lab-04-limit)
         add_test(NAME ${check}
             COMMAND ${CMAKE_COMMAND}
                 -DEMBER=$<TARGET_FILE:ember>
@@ -74,7 +96,8 @@ if(BUILD_TESTING)
 endif()
 
 if(MSVC AND EMBER_MSVC_ASAN)
-    foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob)
+    foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob
+                            lab04_tests assignment_experiment control_experiments scope_experiments)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
