@@ -6,10 +6,16 @@
 // in Lab 1 you read this file, you do not write it.
 //
 // What you add in later labs is one more `else if` branch per command.
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 
+#include "asm/assembler.hpp"
+#include "asm/lexer.hpp"
 #include "cpu.hpp"
 #include "display.hpp"
 #include "dump.hpp"
@@ -29,6 +35,98 @@ static bool parse_number(const std::string& word, long& out) {
     }
 }
 
+static const char* token_name(Token::Kind kind) {
+    switch (kind) {
+    case Token::Kind::Ident: return "Ident";
+    case Token::Kind::Number: return "Number";
+    case Token::Kind::Comma: return "Comma";
+    case Token::Kind::Colon: return "Colon";
+    case Token::Kind::LBracket: return "LBracket";
+    case Token::Kind::RBracket: return "RBracket";
+    case Token::Kind::Newline: return "Newline";
+    case Token::Kind::Eof: return "Eof";
+    }
+    return "?";
+}
+
+static bool read_assembly(const std::string& path, std::string& source) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        std::cerr << "cannot open file: " << path << '\n';
+        return false;
+    }
+    char buffer[4096];
+    while (file.read(buffer, sizeof buffer) || file.gcount() > 0) {
+        source.append(buffer, static_cast<std::size_t>(file.gcount()));
+    }
+    if (file.bad() || !file.eof()) {
+        std::cerr << "cannot read file: " << path << '\n';
+        return false;
+    }
+    return true;
+}
+
+static bool lex_file(const std::string& path) {
+    std::string source, error;
+    if (!read_assembly(path, source)) return false;
+    const std::unique_ptr<Token, decltype(&destroy)> tokens(lex(source, error), destroy);
+    if (!tokens) {
+        std::cerr << path << ": " << error << '\n';
+        return false;
+    }
+    for (const Token* token = tokens.get(); token; token = token->next) {
+        std::cout << token_name(token->kind);
+        if (token->kind == Token::Kind::Ident || token->kind == Token::Kind::Number) {
+            std::cout << '(' << token->text << ')';
+        }
+        std::cout << '\n';
+    }
+    return true;
+}
+
+static std::vector<Byte> assemble_file(const std::string& path) {
+    std::string source, error;
+    if (!read_assembly(path, source)) return {};
+    auto bytes = assemble(source, error);
+    if (!error.empty()) std::cerr << path << ": " << error << '\n';
+    return bytes;
+}
+
+static void load_program(const std::vector<Byte>& bytes, Memory& mem, CPU& cpu) {
+    std::fill(mem.data + CODE_LO, mem.data + CODE_HI + 1, Byte{0});
+    std::copy(bytes.begin(), bytes.end(), mem.data + CODE_LO);
+    cpu = CPU{};
+    cpu.mem = &mem;
+}
+
+static int run_cli(int argc, char* argv[]) {
+    const std::string command = argv[1];
+    if (argc == 3 && command == "lex") return lex_file(argv[2]) ? 0 : 1;
+    if (argc == 3 && command == "asm") {
+        const auto bytes = assemble_file(argv[2]);
+        if (bytes.empty()) return 1;
+        std::cout << std::uppercase << std::hex << std::setfill('0');
+        for (std::size_t i = 0; i < bytes.size(); ++i) {
+            if (i != 0) std::cout << ' ';
+            std::cout << std::setw(2) << static_cast<unsigned>(bytes[i]);
+        }
+        std::cout << '\n';
+        return 0;
+    }
+    if (argc == 2 && command != "lex" && command != "asm") {
+        const auto bytes = assemble_file(command);
+        if (bytes.empty()) return 1;
+        Memory mem;
+        CPU cpu;
+        load_program(bytes, mem, cpu);
+        const bool halted = run(cpu);
+        if (halted) std::cout << '\n';
+        return halted ? 0 : 1;
+    }
+    std::cerr << "usage: ember [<file.asm> | lex <file.asm> | asm <file.asm>]\n";
+    return 1;
+}
+
 static void print_help() {
     std::cout << "commands:\n"
               << "  dump              print all " << MEM_SIZE << " bytes\n"
@@ -44,19 +142,23 @@ static void print_help() {
               << "  find <lo> <hi> <byte>  first match in [lo, hi)\n"
               << "  regs              show PC A B Z N C H SP\n"
               << "  stack             show SP and the top stack bytes\n"
+              << "  lex <file.asm>    print one token per line\n"
+              << "  asm <file.asm>    assemble, load at 0x000 and reset the CPU\n"
               << "  step              execute one instruction\n"
               << "  run [limit]       execute to HALT/error (default 100000 steps)\n"
               << "  help              this list\n"
               << "  quit              leave\n";
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc > 1) return run_cli(argc, argv);
+
     Memory mem;  // 4096 bytes, on the stack, zeroed by the {} in memory.hpp
     CPU cpu;
     cpu.mem = &mem;
     Sprite sprites[SPRITE_COUNT]{};
 
-    std::cout << "ember 0.7 - call and return. Type `help`.\n";
+    std::cout << "ember 1.0.0 - give it a language. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -116,6 +218,21 @@ int main() {
             dump_regs(cpu);
         } else if (cmd == "stack") {
             dump_stack(cpu);
+        } else if (cmd == "lex" || cmd == "asm") {
+            std::string path, extra;
+            // Preserve Windows backslashes inside double-quoted paths.
+            if (!(words >> std::quoted(path, '"', '\0')) || path.empty() || (words >> extra)) {
+                std::cout << "usage: " << cmd << " <file.asm>\n";
+            } else if (cmd == "lex") {
+                lex_file(path);
+            } else {
+                const auto bytes = assemble_file(path);
+                if (!bytes.empty()) {
+                    load_program(bytes, mem, cpu);
+                    std::cout << "loaded " << bytes.size()
+                              << (bytes.size() == 1 ? " byte" : " bytes") << " at 0x000\n";
+                }
+            }
         } else if (cmd == "step") {
             step(cpu);
         } else if (cmd == "run") {

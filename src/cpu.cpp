@@ -26,14 +26,7 @@ void step(CPU& cpu) {
         return;
     }
     const Op op = static_cast<Op>(mem_get(*cpu.mem, cpu.pc));
-    std::size_t length = 1;
-    if (op == Op::LoadiA || op == Op::LoadiB) {
-        length = 2;
-    } else if ((op >= Op::LoadA && op <= Op::StoreB) || op == Op::LoadH ||
-               op == Op::Jmp || op == Op::Jz || op == Op::Jnz || op == Op::Outs ||
-               op == Op::Call) {
-        length = 3;
-    }
+    const auto length = instruction_size(op);
     if (length > MEM_SIZE - cpu.pc) {
         fault(cpu, "instruction operand outside memory");
         return;

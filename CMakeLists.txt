@@ -38,7 +38,9 @@ set(ember_core_sources
     src/display.cpp
     src/sprite.cpp
 )
-add_executable(ember src/main.cpp src/dump.cpp ${ember_core_sources})
+set(ember_assembly_sources src/asm/lexer.cpp src/asm/assembler.cpp)
+add_executable(ember src/main.cpp src/dump.cpp ${ember_core_sources} ${ember_assembly_sources})
+target_include_directories(ember PRIVATE src)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -66,6 +68,28 @@ if(BUILD_TESTING)
     add_executable(lab07_tests tests/test_lab07.cpp ${ember_core_sources})
     target_include_directories(lab07_tests PRIVATE src)
     add_test(NAME lab07_stack_calls_factorial COMMAND lab07_tests)
+
+    add_executable(lab08_tests tests/test_lab08.cpp ${ember_core_sources} ${ember_assembly_sources})
+    target_include_directories(lab08_tests PRIVATE src)
+    foreach(check IN ITEMS lexer assembler programs)
+        add_test(NAME lab08_${check} COMMAND lab08_tests ${check}
+                 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    endforeach()
+    if(MSVC AND EMBER_MSVC_ASAN)
+        target_compile_definitions(lab08_tests PRIVATE $<$<CONFIG:Debug>:EMBER_CHECK_ASAN_ALLOCATIONS>)
+        add_test(NAME lab08_token_allocations COMMAND lab08_tests allocations CONFIGURATIONS Debug)
+        set_tests_properties(lab08_token_allocations PROPERTIES TIMEOUT 10)
+    endif()
+
+    foreach(check IN ITEMS tokens bytes programs errors repl)
+        add_test(NAME lab08_cli_${check}
+            COMMAND ${CMAKE_COMMAND}
+                -DEMBER=$<TARGET_FILE:ember>
+                -DCHECK=${check}
+                -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+                -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_lab08_cli.cmake)
+    endforeach()
 
     add_executable(lab07_notes tests/lab07_notes.cpp tests/lab07_fact.cpp)
     # Deliberately fails at link time when built explicitly.
@@ -139,7 +163,7 @@ if(MSVC AND EMBER_MSVC_ASAN)
                             lab04_tests assignment_experiment control_experiments scope_experiments
                             lab05_tests lab05_frame lab05_notes lab05_asan_unterminated
                             lab06_tests lab06_notes lab06_heap_fixed lab06_heap_unsafe
-                            lab07_tests lab07_notes)
+                            lab07_tests lab07_notes lab08_tests)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different

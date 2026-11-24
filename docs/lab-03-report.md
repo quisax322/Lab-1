@@ -19,7 +19,7 @@ PC/H (16 бітів), ALU, прапорці Z/N/C, інструкції довж
 Windows PowerShell, Visual Studio 18 2026, MSVC x64:
 
 ```powershell
-$cmake = 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+$cmake = Join-Path $env:ProgramFiles 'Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
 $ctest = Join-Path (Split-Path $cmake) 'ctest.exe'
 & $cmake -S . -B build -G 'Visual Studio 18 2026' -A x64
 & $cmake --build build --config Debug
@@ -311,22 +311,22 @@ Byte a = *p; // LOAD A,[H]
 =================================================================
 ==19020==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x0011faeffa20 at pc 0x7ff68bd0124b bp 0x0011faefe9e0 sp 0x0011faefe9e8
 WRITE of size 1 at 0x0011faeffa20 thread T0
-    #0 0x7ff68bd0124a in main C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\asan_oob.cpp:12
-    #1 0x7ff68bd04808 in invoke_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:78
-    #2 0x7ff68bd04751 in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
-    #3 0x7ff68bd0460d in __scrt_common_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:330
-    #4 0x7ff68bd0487d in mainCRTStartup D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_main.cpp:16
-    #5 0x7ffd0fa1dda6 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002dda6)
-    #6 0x7ffd1129ee4b in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18007ee4b)
+    #0 0x7ff68bd0124a in main .\tests\asan_oob.cpp:12
+    #1 0x7ff68bd04808 in invoke_main <msvc-src>\src\vctools\crt\vcstartup\src\startup\exe_common.inl:78
+    #2 0x7ff68bd04751 in __scrt_common_main_seh <msvc-src>\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #3 0x7ff68bd0460d in __scrt_common_main <msvc-src>\src\vctools\crt\vcstartup\src\startup\exe_common.inl:330
+    #4 0x7ff68bd0487d in mainCRTStartup <msvc-src>\src\vctools\crt\vcstartup\src\startup\exe_main.cpp:16
+    #5 0x7ffd0fa1dda6 in BaseThreadInitThunk+0x16 (%SystemRoot%\System32\KERNEL32.DLL+0x18002dda6)
+    #6 0x7ffd1129ee4b in RtlUserThreadStart+0x2b (%SystemRoot%\SYSTEM32\ntdll.dll+0x18007ee4b)
 
 Address 0x0011faeffa20 is located in stack of thread T0 at offset 4128 in frame
-    #0 0x7ff68bd0102f in main C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\asan_oob.cpp:8
+    #0 0x7ff68bd0102f in main .\tests\asan_oob.cpp:8
 
   This frame has 1 object(s):
     [32, 4128) 'data' <== Memory access at offset 4128 overflows this variable
 HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
       (longjmp, SEH and C++ exceptions *are* supported)
-SUMMARY: AddressSanitizer: stack-buffer-overflow C:\Users\aaaan\Downloads\Programming-Practice-Projects-main\Programming-Practice-Projects-main\courses\programming-fundamentals\starter\tests\asan_oob.cpp:12 in main
+SUMMARY: AddressSanitizer: stack-buffer-overflow .\tests\asan_oob.cpp:12 in main
 Shadow bytes around the buggy address:
   0x0011faeff780: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
   0x0011faeff800: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

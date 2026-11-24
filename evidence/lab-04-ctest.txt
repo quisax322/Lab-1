@@ -1,4 +1,4 @@
-Test project C:/Users/aaaan/Downloads/Programming-Practice-Projects-main/Programming-Practice-Projects-main/courses/programming-fundamentals/starter/build
+Test project ./build
       Start  1: alu_cpu_memory
  1/26 Test  #1: alu_cpu_memory ...................   Passed    0.06 sec
       Start  2: lab03_memory_cpu

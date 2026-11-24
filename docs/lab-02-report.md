@@ -16,7 +16,7 @@
 Windows, PowerShell, встановлена Visual Studio 18 2026 (x64):
 
 ```powershell
-$cmake = 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+$cmake = Join-Path $env:ProgramFiles 'Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
 $ctest = Join-Path (Split-Path $cmake) 'ctest.exe'
 & $cmake -S . -B build -G 'Visual Studio 18 2026' -A x64
 & $cmake --build build --config Debug

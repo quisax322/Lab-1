@@ -51,6 +51,27 @@ enum class Op : std::uint8_t {
     Ret = 0x55,
 };
 
+constexpr std::size_t instruction_size(Op op) {
+    switch (op) {
+    case Op::LoadiA:
+    case Op::LoadiB:
+        return 2;
+    case Op::Outs:
+    case Op::LoadA:
+    case Op::LoadB:
+    case Op::StoreA:
+    case Op::StoreB:
+    case Op::LoadH:
+    case Op::Jmp:
+    case Op::Jz:
+    case Op::Jnz:
+    case Op::Call:
+        return 3;
+    default:
+        return 1;
+    }
+}
+
 struct Flags {
     bool z = false;   // результат нульовий
     bool n = false;   // старший біт результату — одиниця
