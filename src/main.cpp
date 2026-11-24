@@ -42,7 +42,8 @@ static void print_help() {
               << "  inc <addr>        increment one memory byte (wraps at 255)\n"
               << "  reg <a|b> <val>   set a CPU register (0..255)\n"
               << "  find <lo> <hi> <byte>  first match in [lo, hi)\n"
-              << "  regs              show PC A B Z N C H\n"
+              << "  regs              show PC A B Z N C H SP\n"
+              << "  stack             show SP and the top stack bytes\n"
               << "  step              execute one instruction\n"
               << "  run [limit]       execute to HALT/error (default 100000 steps)\n"
               << "  help              this list\n"
@@ -55,7 +56,7 @@ int main() {
     cpu.mem = &mem;
     Sprite sprites[SPRITE_COUNT]{};
 
-    std::cout << "ember 0.6 - named bundles. Type `help`.\n";
+    std::cout << "ember 0.7 - call and return. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -113,6 +114,8 @@ int main() {
             }
         } else if (cmd == "regs") {
             dump_regs(cpu);
+        } else if (cmd == "stack") {
+            dump_stack(cpu);
         } else if (cmd == "step") {
             step(cpu);
         } else if (cmd == "run") {

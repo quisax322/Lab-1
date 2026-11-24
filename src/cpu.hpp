@@ -2,6 +2,7 @@
 #pragma once
 #include <cstdint>
 #include "memory.hpp"
+#include "stack.hpp"
 
 // Implemented opcodes from ISA.uk.md.
 enum class Op : std::uint8_t {
@@ -21,6 +22,7 @@ enum class Op : std::uint8_t {
     Inc = 0x18,
     Dec = 0x19,
     Cmp = 0x1A,
+    Mul = 0x1B,
     LoadiA = 0x20,
     LoadiB = 0x21,
     LoadA = 0x22,
@@ -41,6 +43,12 @@ enum class Op : std::uint8_t {
     Cls = 0x40,
     Plot = 0x41,
     Show = 0x43,
+    PushA = 0x50,
+    PopA = 0x51,
+    PushB = 0x52,
+    PopB = 0x53,
+    Call = 0x54,
+    Ret = 0x55,
 };
 
 struct Flags {
@@ -59,8 +67,10 @@ struct CPU {
     Flags f;
     bool halted = false;     // після HALT наступні step відмовляють
     const char* error = nullptr; // latched fault; PC stays at failing instruction
+    Stack stack;             // guest SP and stack operations over *mem
 };
 
 void step(CPU& cpu);
 bool run(CPU& cpu, std::size_t max_steps = 100000);
 void dump_regs(const CPU& cpu);
+void dump_stack(const CPU& cpu);

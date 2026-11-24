@@ -34,6 +34,7 @@ set(ember_core_sources
     src/memory.cpp
     src/alu.cpp
     src/cpu.cpp
+    src/stack.cpp
     src/display.cpp
     src/sprite.cpp
 )
@@ -62,6 +63,15 @@ if(BUILD_TESTING)
     target_include_directories(lab06_tests PRIVATE src)
     add_test(NAME lab06_opcodes_sprites COMMAND lab06_tests)
 
+    add_executable(lab07_tests tests/test_lab07.cpp ${ember_core_sources})
+    target_include_directories(lab07_tests PRIVATE src)
+    add_test(NAME lab07_stack_calls_factorial COMMAND lab07_tests)
+
+    add_executable(lab07_notes tests/lab07_notes.cpp tests/lab07_fact.cpp)
+    # Deliberately fails at link time when built explicitly.
+    add_executable(lab07_duplicate EXCLUDE_FROM_ALL
+                   tests/lab07_notes.cpp tests/lab07_fact.cpp tests/lab07_duplicate.cpp)
+
     add_executable(lab06_notes tests/lab06_notes.cpp)
     target_include_directories(lab06_notes PRIVATE src)
 
@@ -78,7 +88,7 @@ if(BUILD_TESTING)
         add_executable(${experiment} tests/${experiment}.cpp)
     endforeach()
     foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments
-                                lab05_notes lab05_frame lab06_notes)
+                                lab05_notes lab05_frame lab06_notes lab07_notes)
         add_test(NAME ${experiment}
             COMMAND ${CMAKE_COMMAND} -DEXPERIMENT=$<TARGET_FILE:${experiment}>
                 -DCHECK=${experiment} -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
@@ -112,7 +122,8 @@ if(BUILD_TESTING)
                            lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit
                            lab-04 lab-04-trace lab-04-find lab-04-search-found lab-04-search-missing
                            lab-04-unknown lab-04-limit
-                           lab-05 lab-05-pixels lab-05-hello lab-06-sprites)
+                           lab-05 lab-05-pixels lab-05-hello lab-06-sprites
+                           lab-07 lab-07-call lab-07-overflow)
         add_test(NAME ${check}
             COMMAND ${CMAKE_COMMAND}
                 -DEMBER=$<TARGET_FILE:ember>
@@ -127,7 +138,8 @@ if(MSVC AND EMBER_MSVC_ASAN)
     foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob
                             lab04_tests assignment_experiment control_experiments scope_experiments
                             lab05_tests lab05_frame lab05_notes lab05_asan_unterminated
-                            lab06_tests lab06_notes lab06_heap_fixed lab06_heap_unsafe)
+                            lab06_tests lab06_notes lab06_heap_fixed lab06_heap_unsafe
+                            lab07_tests lab07_notes)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different

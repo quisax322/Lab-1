@@ -1,3 +1,109 @@
+# Ember — Lab 07 «Виклик і повернення: функції, стек і рекурсія», Standard M1–M4
+
+[Умова](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-07-call-and-return.md) · [Notes 07](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-07-call-and-return.notes.md) · [ISA §6](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/ISA.uk.md#6-як-саме-працюють-call-і-ret)
+
+## M1. Стек
+
+`CPU` містить об’єкт `Stack` з приватним 16-бітним регістром `SP`. Байти лежать у спільній пам’яті гостя за адресами `0xF00`–`0xFFF`. У порожньому спадному стеку `SP` вказує на наступну вільну позицію. Початкове значення — `0xFFF`. Запис 256-го байта за `0xF00` залишає `SP=0xEFF`. Це стан заповненого стека. Наступна спроба запису дає `stack overflow`.
+
+`push(mem, value)` записує байт і зменшує `SP`. `pop(mem, value)` знімає останній байт і збільшує `SP`. Обидві операції повертають `bool`. `push_address` та `pop_address` перевіряють доступність одразу двох байтів. `sp()` повертає регістр, а `peek(mem, offset, value)` читає зайнятий байт без зняття, починаючи з вершини. Команда `regs` друкує `SP`, команда `stack` показує `SP` і до восьми байтів у порядку зняття.
+
+| Опкод | Інструкція | Байтів | Прапорці | Дія |
+| --- | --- | ---: | --- | --- |
+| `0x1B` | `MUL A, B` | 1 | Z, N, C | Молодші 8 бітів добутку в `A`. `C=1`, якщо добуток перевищує 255 |
+| `0x50` | `PUSH A` | 1 | — | Покласти `A` на стек |
+| `0x51` | `POP A` | 1 | — | Зняти байт у `A` |
+| `0x52` | `PUSH B` | 1 | — | Покласти `B` на стек |
+| `0x53` | `POP B` | 1 | — | Зняти байт у `B` |
+| `0x54` | `CALL addr16` | 3 | — | Зберегти `PC+3` і перейти за адресою операнда |
+| `0x55` | `RET` | 1 | — | Зняти адресу повернення й відновити `PC` |
+
+## M2. Виклик і повернення
+
+`CALL` записує молодший байт `PC+3`, потім старший. `PC+3` позначає інструкцію, з якої треба продовжити виконання після трибайтового виклику. `RET` знімає старший байт першим, тоді молодший. Переповнення, спустошення та некоректні адреси зупиняють виконання на поточному `PC` зі збереженням `SP` і пам’яті.
+
+За конвенцією аргумент і результат передаються в `A`. Той, хто викликає функцію, сам зберігає `B` та `H`, якщо їхні значення потрібні після виклику. Функція прибирає зі стека свої тимчасові дані до `RET`. Зокрема, `fact` кладе поточне `n` на стек перед рекурсією і знімає його в `B` для множення.
+
+Сценарій [простого виклику](checks/lab-07-call.txt) починається з `A=65`. Байти програми від адреси `0x0000` — `54 04 00 00 02 55`. У таблиці наведено стан після кожного кроку.
+
+| Крок | Інструкція | `PC` до → після | `SP` після | Активні байти стека від вершини |
+| ---: | --- | --- | --- | --- |
+| 0 | Початок | `0000` | `FFF` | порожньо |
+| 1 | `CALL printA` | `0000 → 0004` | `FFD` | `FFE=00`, `FFF=03` |
+| 2 | `OUT`, друкує `A` | `0004 → 0005` | `FFD` | `FFE=00`, `FFF=03` |
+| 3 | `RET` | `0005 → 0003` | `FFF` | порожньо |
+| 4 | `HALT` | `0003 → 0004` | `FFF` | порожньо |
+
+## M3. Рекурсивний факторіал
+
+Лістинг із [ISA §6](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/ISA.uk.md#розібраний-приклад) завантажує [офіційний сценарій](checks/lab-07.txt).
+
+```text
+Адреса  Байти     Інструкція
+0000    20 05     LOADI A, 5
+0002    54 07 00  CALL fact
+0005    03        OUTN
+0006    00        HALT
+0007    21 00     fact: LOADI B, 0
+0009    1A              CMP A, B
+000A    31 1B 00        JZ base
+000D    21 01           LOADI B, 1
+000F    1A              CMP A, B
+0010    31 1B 00        JZ base
+0013    50              PUSH A
+0014    19              DEC A
+0015    54 07 00        CALL fact
+0018    53              POP B
+0019    1B              MUL A, B
+001A    55              RET
+001B    20 01     base: LOADI A, 1
+001D    55              RET
+```
+
+Трасування всіх `CALL` і `RET` для `fact(5)`. Адреси шістнадцяткові, значення `A` десяткові.
+
+| Крок | Інструкція | `PC` до → після | `SP` до → після | `A` |
+| ---: | --- | --- | --- | ---: |
+| 2 | CALL | `0002 → 0007` | `FFF → FFD` | 5 |
+| 11 | CALL | `0015 → 0007` | `FFC → FFA` | 4 |
+| 20 | CALL | `0015 → 0007` | `FF9 → FF7` | 3 |
+| 29 | CALL | `0015 → 0007` | `FF6 → FF4` | 2 |
+| 38 | CALL | `0015 → 0007` | `FF3 → FF1` | 1 |
+| 46 | RET | `001D → 0018` | `FF1 → FF3` | 1 |
+| 49 | RET | `001A → 0018` | `FF4 → FF6` | 2 |
+| 52 | RET | `001A → 0018` | `FF7 → FF9` | 6 |
+| 55 | RET | `001A → 0018` | `FFA → FFC` | 24 |
+| 58 | RET | `001A → 0005` | `FFD → FFF` | 120 |
+
+| Вхід | Вивід | Кроків до `HALT` | Мінімальний `SP` | Максимум байтів | `C` | Кінцевий `SP` |
+| ---: | ---: | ---: | --- | ---: | ---: | --- |
+| 0 | 1 | 9 | `0xFFD` | 2 | 0 | `0xFFF` |
+| 1 | 1 | 12 | `0xFFD` | 2 | 0 | `0xFFF` |
+| 5 | 120 | 60 | `0xFF1` | 14 | 0 | `0xFFF` |
+| 6 | 208 | 72 | `0xFEE` | 17 | 1 | `0xFFF` |
+
+Для `fact(5)` одночасно живуть п’ять адрес повернення й чотири збережені аргументи, разом 14 байтів. У варіанті з `20 06` фінальний `MUL` множить 120 на 6. У `A` залишаються молодші 8 бітів, тобто `720 mod 256 = 208`, з прапорцями `Z=0, N=1, C=1`. `lab07_tests` друкує трасування для всіх чотирьох входів.
+
+[Сценарій переповнення](checks/lab-07-overflow.txt) виконує `CALL 0x0000` без базового випадку. 128 викликів заповнюють усі 256 байтів, а 129-та спроба дає `CPU error: stack overflow (PC=0)`. Стан лишається `SP=0xEFF`, контрольний байт за `0xEFF` лишається `0xA5`. Після помилки REPL приймає команди й виходить через `quit` з кодом 0.
+
+## M4. Збірка й досліди
+
+`stack.cpp` входить до CMake разом з окремими модулями CPU, ALU, пам’яті, екрана та спрайтів. Дослід `lab07_notes` друкує `1 2 2`. Передача за значенням залишила змінну рівною 1, посилання й вказівник змінили свої змінні на 2. Рекурсивний C++ `fact(3)` друкує `>3, >2, >1, <2, <3` і повертає `6`. Оголошення `fact` спільне для одиниць трансляції, визначення міститься в `lab07_fact.cpp`. Явна збірка ізольованої цілі `lab07_duplicate` додає друге визначення й завершується з кодом 1 та повідомленнями лінкера `LNK2005` для `fact(int)` і `LNK1169`.
+
+```powershell
+cmake -S . -B build/lab07 -G 'Visual Studio 18 2026' -A x64 -DEMBER_MSVC_ASAN=ON
+cmake --build build/lab07 --config Debug -- /m:1 /nodeReuse:false
+ctest --test-dir build/lab07 -C Debug --output-on-failure
+Get-Content checks/lab-07.txt | ./build/lab07/Debug/ember.exe
+Get-Content checks/lab-07-call.txt | ./build/lab07/Debug/ember.exe
+Get-Content checks/lab-07-overflow.txt | ./build/lab07/Debug/ember.exe
+./build/lab07/Debug/lab07_tests.exe
+./build/lab07/Debug/lab07_notes.exe
+cmake --build build/lab07 --config Debug --target lab07_duplicate
+```
+
+Збірка MSVC 19.51.36260.0 x64 Debug із `/fsanitize=address` завершилася успішно. CTest до змін — **38/38**, після змін — **43/43**, включно з офіційним сценарієм Lab 07. Вивід усіх 22 попередніх сценаріїв Lab 01–06 збігся після вилучення з порівняння рядка версії та нового поля `SP`. Тести Lab 07 перевірили межі та LIFO, відмову зі збереженням стану, порядок байтів і вкладені виклики, обрізані операнди, факторіал і всі 65 536 пар операндів `MUL`. Окремі досліди Lab 03, 05 і 06 відтворили діагностики ASan. Для досліду витоку MSVC ASan повідомив про відсутність підтримки `detect_leaks=1`.
+
 # Ember — Lab 06 «Іменовані набори: структури, переліки й купа», Standard, M1–M3
 
 [Умова Lab 06](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-06-named-bundles.md) · [Notes 06](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-06-named-bundles.notes.md) · [ISA](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/ISA.uk.md) · [CHECKS](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/CHECKS.md)
@@ -6,7 +112,7 @@
 
 `struct` об’єднує іменовані поля в один об’єкт. `CPU` зберігає регістри, вкладену структуру `Flags`, стан зупинки та вказівники на пам’ять і повідомлення про помилку. `step(CPU&)` змінює цей об’єкт за посиланням. `enum class Op : std::uint8_t` задає окремий однобайтовий тип для опкодів. `step()` явно перетворює байт на `Op` і декодує його через `switch`. Невідомий байт фіксує помилку на поточному `PC`.
 
-Фактичні вимірювання `sizeof`, `alignof` і `offsetof` у MSVC 19.51.36260.0 x64 Debug. Зсуви та розміри наведено в байтах.
+Фактичні вимірювання `sizeof`, `alignof` і `offsetof` для Lab 06 у MSVC 19.51.36260.0 x64 Debug. Зсуви та розміри наведено в байтах.
 
 | Тип | `sizeof` | `alignof` | Зсуви полів | Вирівнювальні байти |
 | --- | ---: | ---: | --- | --- |

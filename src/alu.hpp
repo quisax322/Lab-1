@@ -13,3 +13,4 @@ Byte alu_shl(Byte a, Flags& f);
 Byte alu_shr(Byte a, Flags& f);
 Byte alu_inc(Byte a, Flags& f);
 Byte alu_dec(Byte a, Flags& f);
+Byte alu_mul(Byte a, Byte b, Flags& f);

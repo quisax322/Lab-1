@@ -1,0 +1,22 @@
+reg a 65
+set 0 0x54
+set 1 0x04
+set 2 0x00
+set 3 0x00
+set 4 0x02
+set 5 0x55
+regs
+stack
+step
+regs
+stack
+step
+regs
+stack
+step
+regs
+stack
+step
+regs
+stack
+quit

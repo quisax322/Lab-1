@@ -65,11 +65,12 @@ static void branches() {
             require(cpu.error != nullptr && cpu.pc == start, "truncated branch even if not taken");
         }
     }
-    // All unsupported bytes, including opcodes reserved for Labs 06-08, fault.
+    // All unsupported bytes fault, including reserved and optional opcodes.
     for (unsigned op = 0; op < 256; ++op) {
-        const bool known = op <= 0x04 || (op >= 0x10 && op <= 0x1A) ||
+        const bool known = op <= 0x04 || (op >= 0x10 && op <= 0x1B) ||
                            (op >= 0x20 && op <= 0x2D) || (op >= 0x30 && op <= 0x32) ||
-                           op == 0x40 || op == 0x41 || op == 0x43;
+                           op == 0x40 || op == 0x41 || op == 0x43 ||
+                           (op >= 0x50 && op <= 0x55);
         if (known) continue;
         Memory mem; mem.data[0] = static_cast<Byte>(op);
         CPU cpu; cpu.mem = &mem; cpu.a = 7; cpu.b = 8; cpu.h = 9; cpu.f = {true,true,true};

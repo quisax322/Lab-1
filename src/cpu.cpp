@@ -30,7 +30,8 @@ void step(CPU& cpu) {
     if (op == Op::LoadiA || op == Op::LoadiB) {
         length = 2;
     } else if ((op >= Op::LoadA && op <= Op::StoreB) || op == Op::LoadH ||
-               op == Op::Jmp || op == Op::Jz || op == Op::Jnz || op == Op::Outs) {
+               op == Op::Jmp || op == Op::Jz || op == Op::Jnz || op == Op::Outs ||
+               op == Op::Call) {
         length = 3;
     }
     if (length > MEM_SIZE - cpu.pc) {
@@ -80,6 +81,7 @@ void step(CPU& cpu) {
     case Op::Inc: cpu.a = alu_inc(cpu.a, cpu.f); break;
     case Op::Dec: cpu.a = alu_dec(cpu.a, cpu.f); break;
     case Op::Cmp: (void)alu_sub(cpu.a, cpu.b, cpu.f); break;
+    case Op::Mul: cpu.a = alu_mul(cpu.a, cpu.b, cpu.f); break;
     case Op::LoadiA: cpu.a = mem_get(*cpu.mem, cpu.pc + 1); break;
     case Op::LoadiB: cpu.b = mem_get(*cpu.mem, cpu.pc + 1); break;
     case Op::LoadA: cpu.a = mem_get(*cpu.mem, address); break;
@@ -113,6 +115,47 @@ void step(CPU& cpu) {
     case Op::Cls: clear(*cpu.mem); break;
     case Op::Plot: cpu.f.c = !plot(*cpu.mem, cpu.a, cpu.b); break;
     case Op::Show: show(*cpu.mem); break;
+    case Op::PushA:
+    case Op::PushB:
+        if (!cpu.stack.push(*cpu.mem, op == Op::PushA ? cpu.a : cpu.b)) {
+            fault(cpu, "stack overflow");
+            return;
+        }
+        break;
+    case Op::PopA:
+    case Op::PopB:
+        if (!cpu.stack.pop(*cpu.mem, op == Op::PopA ? cpu.a : cpu.b)) {
+            fault(cpu, "stack underflow");
+            return;
+        }
+        break;
+    case Op::Call: {
+        const auto target = get16(*cpu.mem, cpu.pc + 1);
+        if (target >= MEM_SIZE) {
+            fault(cpu, "call target outside memory");
+            return;
+        }
+        if (!cpu.stack.push_address(*cpu.mem, next_pc)) {
+            fault(cpu, "stack overflow");
+            return;
+        }
+        next_pc = target;
+        break;
+    }
+    case Op::Ret: {
+        // Commit the popped SP only after checking the guest return address.
+        Stack after_return = cpu.stack;
+        if (!after_return.pop_address(*cpu.mem, next_pc)) {
+            fault(cpu, "stack underflow");
+            return;
+        }
+        if (next_pc >= MEM_SIZE) {
+            fault(cpu, "return target outside memory");
+            return;
+        }
+        cpu.stack = after_return;
+        break;
+    }
     default: {
         cpu.error = "unknown opcode";
         const auto saved_flags = std::cout.flags();
@@ -152,6 +195,25 @@ void dump_regs(const CPU& cpu) {
               << " A=" << static_cast<unsigned>(cpu.a)
               << " B=" << static_cast<unsigned>(cpu.b)
               << " Z=" << cpu.f.z << " N=" << cpu.f.n << " C=" << cpu.f.c
-              << " H=" << cpu.h << '\n';
+              << " H=" << cpu.h
+              << " SP=0x" << std::hex << std::uppercase << cpu.stack.sp() << '\n';
     std::cout.flags(saved_flags);
+}
+
+void dump_stack(const CPU& cpu) {
+    const auto saved_flags = std::cout.flags();
+    const auto saved_fill = std::cout.fill();
+    std::cout << "SP=0x" << std::hex << std::uppercase << cpu.stack.sp();
+    Byte value = 0;
+    if (cpu.mem && cpu.stack.peek(*cpu.mem, 0, value)) {
+        std::cout << " top:";
+        for (std::size_t i = 0; i < 8 && cpu.stack.peek(*cpu.mem, i, value); ++i) {
+            std::cout << ' ' << std::setfill('0') << std::setw(2) << static_cast<unsigned>(value);
+        }
+    } else {
+        std::cout << " (empty)";
+    }
+    std::cout << '\n';
+    std::cout.flags(saved_flags);
+    std::cout.fill(saved_fill);
 }

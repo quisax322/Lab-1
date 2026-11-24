@@ -41,6 +41,7 @@ constexpr Encoding isa[] = {
     {Op::Inc, 0x18, 1},
     {Op::Dec, 0x19, 1},
     {Op::Cmp, 0x1A, 1},
+    {Op::Mul, 0x1B, 1},
     {Op::LoadiA, 0x20, 2},
     {Op::LoadiB, 0x21, 2},
     {Op::LoadA, 0x22, 3},
@@ -61,6 +62,12 @@ constexpr Encoding isa[] = {
     {Op::Cls, 0x40, 1},
     {Op::Plot, 0x41, 1},
     {Op::Show, 0x43, 1},
+    {Op::PushA, 0x50, 1},
+    {Op::PopA, 0x51, 1},
+    {Op::PushB, 0x52, 1},
+    {Op::PopB, 0x53, 1},
+    {Op::Call, 0x54, 3},
+    {Op::Ret, 0x55, 1},
 };
 
 static_assert(std::is_same_v<std::underlying_type_t<Op>, std::uint8_t>);
@@ -75,10 +82,15 @@ static void test_opcodes(std::ostringstream& output) {
             [byte](const Encoding& entry) { return entry.byte == byte; });
         Memory mem{};
         mem.data[0] = static_cast<Byte>(byte);
-        mem.data[1] = 3; // For jumps, make the target equal to the sequential PC.
+        mem.data[1] = 3; // Jumps and CALL use the sequential address as their target.
         CPU cpu{};
         cpu.mem = &mem;
         cpu.h = 0x800;
+        if (byte == 0x51 || byte == 0x53) {
+            require(cpu.stack.push(mem, 0), "provide a byte for POP");
+        } else if (byte == 0x55) {
+            require(cpu.stack.push_address(mem, 1), "provide a sequential return address");
+        }
         step(cpu);
 
         if (encoding == std::end(isa)) {

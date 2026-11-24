@@ -56,3 +56,9 @@ Byte alu_inc(Byte a, Flags& f) {
 Byte alu_dec(Byte a, Flags& f) {
     return update_zn(static_cast<Byte>(a - 1), f);
 }
+
+Byte alu_mul(Byte a, Byte b, Flags& f) {
+    const unsigned product = static_cast<unsigned>(a) * b;
+    f.c = (product > 0xFFu);
+    return update_zn(static_cast<Byte>(product), f);
+}
