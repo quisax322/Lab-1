@@ -35,6 +35,7 @@ set(ember_core_sources
     src/alu.cpp
     src/cpu.cpp
     src/display.cpp
+    src/sprite.cpp
 )
 add_executable(ember src/main.cpp src/dump.cpp ${ember_core_sources})
 
@@ -57,13 +58,27 @@ if(BUILD_TESTING)
     target_include_directories(lab05_tests PRIVATE src)
     add_test(NAME lab05_display_strings COMMAND lab05_tests)
 
+    add_executable(lab06_tests tests/test_lab06.cpp ${ember_core_sources})
+    target_include_directories(lab06_tests PRIVATE src)
+    add_test(NAME lab06_opcodes_sprites COMMAND lab06_tests)
+
+    add_executable(lab06_notes tests/lab06_notes.cpp)
+    target_include_directories(lab06_notes PRIVATE src)
+
+    add_executable(lab06_heap_fixed tests/lab06_heap.cpp)
+    foreach(experiment IN ITEMS leak use-after-free double-free)
+        add_test(NAME lab06_fixed_${experiment} COMMAND lab06_heap_fixed ${experiment})
+    endforeach()
+    add_executable(lab06_heap_unsafe EXCLUDE_FROM_ALL tests/lab06_heap.cpp)
+    target_compile_definitions(lab06_heap_unsafe PRIVATE EMBER_ASAN_DEMO_UNSAFE)
+
     add_executable(lab05_frame examples/lab05_frame.cpp src/display.cpp src/dump.cpp)
     target_include_directories(lab05_frame PRIVATE src)
     foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments lab05_notes)
         add_executable(${experiment} tests/${experiment}.cpp)
     endforeach()
     foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments
-                                lab05_notes lab05_frame)
+                                lab05_notes lab05_frame lab06_notes)
         add_test(NAME ${experiment}
             COMMAND ${CMAKE_COMMAND} -DEXPERIMENT=$<TARGET_FILE:${experiment}>
                 -DCHECK=${experiment} -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
@@ -97,7 +112,7 @@ if(BUILD_TESTING)
                            lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit
                            lab-04 lab-04-trace lab-04-find lab-04-search-found lab-04-search-missing
                            lab-04-unknown lab-04-limit
-                           lab-05 lab-05-pixels lab-05-hello)
+                           lab-05 lab-05-pixels lab-05-hello lab-06-sprites)
         add_test(NAME ${check}
             COMMAND ${CMAKE_COMMAND}
                 -DEMBER=$<TARGET_FILE:ember>
@@ -111,7 +126,8 @@ endif()
 if(MSVC AND EMBER_MSVC_ASAN)
     foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob
                             lab04_tests assignment_experiment control_experiments scope_experiments
-                            lab05_tests lab05_frame lab05_notes lab05_asan_unterminated)
+                            lab05_tests lab05_frame lab05_notes lab05_asan_unterminated
+                            lab06_tests lab06_notes lab06_heap_fixed lab06_heap_unsafe)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different

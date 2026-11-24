@@ -128,11 +128,11 @@ static void test_cpu() {
     }
 
     Memory mem;
-    mem.data[0] = OP_SHL;
-    mem.data[1] = OP_SHL;
-    mem.data[2] = OP_INC;
-    mem.data[3] = OP_HALT;
-    mem.data[4] = OP_DEC;
+    mem.data[0] = static_cast<Byte>(Op::Shl);
+    mem.data[1] = static_cast<Byte>(Op::Shl);
+    mem.data[2] = static_cast<Byte>(Op::Inc);
+    mem.data[3] = static_cast<Byte>(Op::Halt);
+    mem.data[4] = static_cast<Byte>(Op::Dec);
     CPU cpu;
     cpu.mem = &mem;
     cpu.a = 64;
@@ -158,7 +158,7 @@ static void test_cpu() {
     CPU last;
     last.mem = &mem;
     last.pc = static_cast<std::uint16_t>(MEM_SIZE - 1);
-    mem.data[MEM_SIZE - 1] = OP_NOP;
+    mem.data[MEM_SIZE - 1] = static_cast<Byte>(Op::Nop);
     step(last);
     require(last.pc == MEM_SIZE && !last.halted, "last-address NOP");
 

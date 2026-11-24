@@ -25,12 +25,12 @@ void step(CPU& cpu) {
         fault(cpu, "PC outside memory");
         return;
     }
-    const Byte op = mem_get(*cpu.mem, cpu.pc);
+    const Op op = static_cast<Op>(mem_get(*cpu.mem, cpu.pc));
     std::size_t length = 1;
-    if (op == OP_LOADI_A || op == OP_LOADI_B) {
+    if (op == Op::LoadiA || op == Op::LoadiB) {
         length = 2;
-    } else if ((op >= OP_LOAD_A && op <= OP_STORE_B) || op == OP_LOADH ||
-               op == OP_JMP || op == OP_JZ || op == OP_JNZ || op == OP_OUTS) {
+    } else if ((op >= Op::LoadA && op <= Op::StoreB) || op == Op::LoadH ||
+               op == Op::Jmp || op == Op::Jz || op == Op::Jnz || op == Op::Outs) {
         length = 3;
     }
     if (length > MEM_SIZE - cpu.pc) {
@@ -38,9 +38,9 @@ void step(CPU& cpu) {
         return;
     }
     std::uint16_t address = 0;
-    if (op >= OP_LOAD_A && op <= OP_STORE_B) {
+    if (op >= Op::LoadA && op <= Op::StoreB) {
         address = get16(*cpu.mem, cpu.pc + 1);
-    } else if (op == OP_LOAD_H || op == OP_STORE_H) {
+    } else if (op == Op::LoadAFromH || op == Op::StoreAToH) {
         address = cpu.h;
     }
     if (address >= MEM_SIZE) {
@@ -50,16 +50,16 @@ void step(CPU& cpu) {
     // Taken branches replace the sequential PC, without adding their size again.
     auto next_pc = static_cast<std::uint16_t>(cpu.pc + length);
     switch (op) {
-    case OP_HALT: cpu.halted = true; break;
-    case OP_NOP: break;
-    case OP_OUT: std::cout.put(static_cast<char>(cpu.a)); break;
-    case OP_OUTN: {
+    case Op::Halt: cpu.halted = true; break;
+    case Op::Nop: break;
+    case Op::Out: std::cout.put(static_cast<char>(cpu.a)); break;
+    case Op::Outn: {
         const auto saved_flags = std::cout.flags();
         std::cout << std::dec << static_cast<unsigned>(cpu.a) << ' ';
         std::cout.flags(saved_flags);
         break;
     }
-    case OP_OUTS: {
+    case Op::Outs: {
         std::size_t addr = get16(*cpu.mem, cpu.pc + 1);
         constexpr std::size_t max_bytes = 256;
         for (std::size_t count = 0; count < max_bytes && addr < MEM_SIZE; ++count, ++addr) {
@@ -69,37 +69,37 @@ void step(CPU& cpu) {
         }
         break;
     }
-    case OP_ADD: cpu.a = alu_add(cpu.a, cpu.b, cpu.f); break;
-    case OP_SUB: cpu.a = alu_sub(cpu.a, cpu.b, cpu.f); break;
-    case OP_AND: cpu.a = alu_and(cpu.a, cpu.b, cpu.f); break;
-    case OP_OR:  cpu.a = alu_or(cpu.a, cpu.b, cpu.f); break;
-    case OP_XOR: cpu.a = alu_xor(cpu.a, cpu.b, cpu.f); break;
-    case OP_NOT: cpu.a = alu_not(cpu.a, cpu.f); break;
-    case OP_SHL: cpu.a = alu_shl(cpu.a, cpu.f); break;
-    case OP_SHR: cpu.a = alu_shr(cpu.a, cpu.f); break;
-    case OP_INC: cpu.a = alu_inc(cpu.a, cpu.f); break;
-    case OP_DEC: cpu.a = alu_dec(cpu.a, cpu.f); break;
-    case OP_CMP: (void)alu_sub(cpu.a, cpu.b, cpu.f); break;
-    case OP_LOADI_A: cpu.a = mem_get(*cpu.mem, cpu.pc + 1); break;
-    case OP_LOADI_B: cpu.b = mem_get(*cpu.mem, cpu.pc + 1); break;
-    case OP_LOAD_A: cpu.a = mem_get(*cpu.mem, address); break;
-    case OP_LOAD_B: cpu.b = mem_get(*cpu.mem, address); break;
-    case OP_STORE_A: mem_set(*cpu.mem, address, cpu.a); break;
-    case OP_STORE_B: mem_set(*cpu.mem, address, cpu.b); break;
-    case OP_MOV_AB: cpu.a = cpu.b; break;
-    case OP_MOV_BA: cpu.b = cpu.a; break;
-    case OP_LOADH: cpu.h = get16(*cpu.mem, cpu.pc + 1); break;
-    case OP_LOAD_H: cpu.a = mem_get(*cpu.mem, address); break;
-    case OP_STORE_H: mem_set(*cpu.mem, address, cpu.a); break;
-    case OP_INCH: cpu.h = static_cast<std::uint16_t>(cpu.h + 1); break;
-    case OP_DECH: cpu.h = static_cast<std::uint16_t>(cpu.h - 1); break;
-    case OP_HLOW: cpu.a = static_cast<Byte>(cpu.h & 0xFFu); break;
-    case OP_JMP:
-    case OP_JZ:
-    case OP_JNZ: {
+    case Op::Add: cpu.a = alu_add(cpu.a, cpu.b, cpu.f); break;
+    case Op::Sub: cpu.a = alu_sub(cpu.a, cpu.b, cpu.f); break;
+    case Op::And: cpu.a = alu_and(cpu.a, cpu.b, cpu.f); break;
+    case Op::Or:  cpu.a = alu_or(cpu.a, cpu.b, cpu.f); break;
+    case Op::Xor: cpu.a = alu_xor(cpu.a, cpu.b, cpu.f); break;
+    case Op::Not: cpu.a = alu_not(cpu.a, cpu.f); break;
+    case Op::Shl: cpu.a = alu_shl(cpu.a, cpu.f); break;
+    case Op::Shr: cpu.a = alu_shr(cpu.a, cpu.f); break;
+    case Op::Inc: cpu.a = alu_inc(cpu.a, cpu.f); break;
+    case Op::Dec: cpu.a = alu_dec(cpu.a, cpu.f); break;
+    case Op::Cmp: (void)alu_sub(cpu.a, cpu.b, cpu.f); break;
+    case Op::LoadiA: cpu.a = mem_get(*cpu.mem, cpu.pc + 1); break;
+    case Op::LoadiB: cpu.b = mem_get(*cpu.mem, cpu.pc + 1); break;
+    case Op::LoadA: cpu.a = mem_get(*cpu.mem, address); break;
+    case Op::LoadB: cpu.b = mem_get(*cpu.mem, address); break;
+    case Op::StoreA: mem_set(*cpu.mem, address, cpu.a); break;
+    case Op::StoreB: mem_set(*cpu.mem, address, cpu.b); break;
+    case Op::MovAB: cpu.a = cpu.b; break;
+    case Op::MovBA: cpu.b = cpu.a; break;
+    case Op::LoadH: cpu.h = get16(*cpu.mem, cpu.pc + 1); break;
+    case Op::LoadAFromH: cpu.a = mem_get(*cpu.mem, address); break;
+    case Op::StoreAToH: mem_set(*cpu.mem, address, cpu.a); break;
+    case Op::IncH: cpu.h = static_cast<std::uint16_t>(cpu.h + 1); break;
+    case Op::DecH: cpu.h = static_cast<std::uint16_t>(cpu.h - 1); break;
+    case Op::HLow: cpu.a = static_cast<Byte>(cpu.h & 0xFFu); break;
+    case Op::Jmp:
+    case Op::Jz:
+    case Op::Jnz: {
         const auto target = get16(*cpu.mem, cpu.pc + 1);
-        const bool taken = op == OP_JMP || (op == OP_JZ && cpu.f.z) ||
-                           (op == OP_JNZ && !cpu.f.z);
+        const bool taken = op == Op::Jmp || (op == Op::Jz && cpu.f.z) ||
+                           (op == Op::Jnz && !cpu.f.z);
         // Operand bytes are always checked; an unused target is not dereferenced.
         if (taken) {
             if (target >= MEM_SIZE) {
@@ -110,9 +110,9 @@ void step(CPU& cpu) {
         }
         break;
     }
-    case OP_CLS: clear(*cpu.mem); break;
-    case OP_PLOT: cpu.f.c = !plot(*cpu.mem, cpu.a, cpu.b); break;
-    case OP_SHOW: show(*cpu.mem); break;
+    case Op::Cls: clear(*cpu.mem); break;
+    case Op::Plot: cpu.f.c = !plot(*cpu.mem, cpu.a, cpu.b); break;
+    case Op::Show: show(*cpu.mem); break;
     default: {
         cpu.error = "unknown opcode";
         const auto saved_flags = std::cout.flags();

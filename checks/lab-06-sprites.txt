@@ -1,0 +1,27 @@
+set 0xA00 0xFF
+tick
+sprite 0 1 1 -1 -1
+sprite 7 62 30 1 1
+tick
+sprite -1 0 0 0 0
+sprite 8 0 0 0 0
+sprite 0 -1 0 0 0
+sprite 0 64 0 0 0
+sprite 0 0 -1 0 0
+sprite 0 0 32 0 0
+sprite 0 0 0 -128 0
+sprite 0 0 0 128 0
+sprite 0 0 0 0 -128
+sprite 0 0 0 0 128
+sprite 0 0 0 9999999999999999999999999 0
+sprite 0 0 0 1x 0
+sprite 0 0 0 0
+sprite 0 0 0 0 0 extra
+tick extra
+tick
+tick
+sprite 7 0x10 8 -0x7F 127
+tick
+get 0xA59
+regs
+quit

@@ -30,3 +30,5 @@ evidence/*
 
 # Permanent Lab 04 validation evidence.
 !evidence/lab-04-*.txt
+
+!evidence/lab-06-sanitizers.txt

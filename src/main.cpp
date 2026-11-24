@@ -14,6 +14,7 @@
 #include "display.hpp"
 #include "dump.hpp"
 #include "memory.hpp"
+#include "sprite.hpp"
 
 // Turn a word into a number. Accepts decimal (65) and hex (0x41).
 // Returns false if the word is not a number at all.
@@ -32,6 +33,8 @@ static void print_help() {
     std::cout << "commands:\n"
               << "  dump              print all " << MEM_SIZE << " bytes\n"
               << "  show              draw the 64x32 screen\n"
+              << "  sprite <i> <x> <y> <vx> <vy>  set and activate a sprite\n"
+              << "  tick              move sprites and draw the next frame\n"
               << "  get <addr>        show one byte four ways\n"
               << "  set <addr> <val>  write one byte (dec or 0x hex)\n"
               << "  get16 <addr>      read a little-endian word\n"
@@ -50,8 +53,9 @@ int main() {
     Memory mem;  // 4096 bytes, on the stack, zeroed by the {} in memory.hpp
     CPU cpu;
     cpu.mem = &mem;
+    Sprite sprites[SPRITE_COUNT]{};
 
-    std::cout << "ember 0.5 - arrays, strings and display. Type `help`.\n";
+    std::cout << "ember 0.6 - named bundles. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -79,6 +83,34 @@ int main() {
             dump(mem);
         } else if (cmd == "show") {
             show(mem);
+        } else if (cmd == "sprite") {
+            std::string i_word, x_word, y_word, vx_word, vy_word, extra;
+            long i = 0, x = 0, y = 0, vx = 0, vy = 0;
+            if (!(words >> i_word >> x_word >> y_word >> vx_word >> vy_word) ||
+                !parse_number(i_word, i) || !parse_number(x_word, x) ||
+                !parse_number(y_word, y) || !parse_number(vx_word, vx) ||
+                !parse_number(vy_word, vy) || (words >> extra)) {
+                std::cout << "usage: sprite <i> <x> <y> <vx> <vy>\n";
+            } else if (i < 0 || i >= static_cast<long>(SPRITE_COUNT)) {
+                std::cout << "sprite index must be 0.." << SPRITE_COUNT - 1 << '\n';
+            } else if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+                std::cout << "sprite coordinates must be x=0..63, y=0..31\n";
+            } else if (vx < -SPRITE_MAX_SPEED || vx > SPRITE_MAX_SPEED ||
+                       vy < -SPRITE_MAX_SPEED || vy > SPRITE_MAX_SPEED) {
+                std::cout << "sprite velocities must be -" << SPRITE_MAX_SPEED << ".."
+                          << SPRITE_MAX_SPEED << '\n';
+            } else {
+                sprites[i] = {static_cast<std::uint8_t>(x), static_cast<std::uint8_t>(y),
+                              static_cast<std::int8_t>(vx), static_cast<std::int8_t>(vy), true};
+            }
+        } else if (cmd == "tick") {
+            std::string extra;
+            if (words >> extra) {
+                std::cout << "usage: tick\n";
+            } else {
+                tick_sprites(mem, sprites);
+                show(mem);
+            }
         } else if (cmd == "regs") {
             dump_regs(cpu);
         } else if (cmd == "step") {

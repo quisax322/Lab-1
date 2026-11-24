@@ -1,3 +1,90 @@
+# Ember — Lab 06 «Іменовані набори: структури, переліки й купа», Standard, M1–M3
+
+[Умова Lab 06](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-06-named-bundles.md) · [Notes 06](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/lab-06-named-bundles.notes.md) · [ISA](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/ISA.uk.md) · [CHECKS](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/courses/programming-fundamentals/CHECKS.md)
+
+## M1. Структури й опкоди
+
+`struct` об’єднує іменовані поля в один об’єкт. `CPU` зберігає регістри, вкладену структуру `Flags`, стан зупинки та вказівники на пам’ять і повідомлення про помилку. `step(CPU&)` змінює цей об’єкт за посиланням. `enum class Op : std::uint8_t` задає окремий однобайтовий тип для опкодів. `step()` явно перетворює байт на `Op` і декодує його через `switch`. Невідомий байт фіксує помилку на поточному `PC`.
+
+Фактичні вимірювання `sizeof`, `alignof` і `offsetof` у MSVC 19.51.36260.0 x64 Debug. Зсуви та розміри наведено в байтах.
+
+| Тип | `sizeof` | `alignof` | Зсуви полів | Вирівнювальні байти |
+| --- | ---: | ---: | --- | --- |
+| `CPU` | 32 | 8 | `mem` 0, `pc` 8, `h` 10, `a` 12, `b` 13, `f` 14, `halted` 17, `error` 24 | 18–23 |
+| `Flags` | 3 | 1 | `z` 0, `n` 1, `c` 2 | немає |
+| `Sprite` | 5 | 1 | `x` 0, `y` 1, `vx` 2, `vy` 3, `alive` 4 | немає |
+| `P { char c; int n; }` | 8 | 4 | `c` 0, `n` 4 | 1–3 |
+
+У `CPU` вказівник `mem` займає байти 0–7, прапорці `f.z/f.n/f.c` — 14–16, а `error` — 24–31. Поля разом займають 26 байтів. Компілятор додає 6 байтів між `halted` і `error`, щоб початок `error` був кратний 8. У `P` поля займають 5 байтів, а ще 3 вирівнюють `n` до зсуву 4. Масив `Sprite[8]` має 40 байтів. Порожня агрегатна ініціалізація `Sprite{}` дала нулі в координатах і швидкостях та `false` в `alive`.
+
+Явне `static_cast<Op>(0x10)` дало `Op::Add` зі значенням 16. Окрема спроба скомпілювати `op = 1` із макросом `EMBER_LAB06_ENUM_REJECT_INT` завершилася помилкою MSVC `C2440` про неможливість неявного перетворення `int` на `Op`.
+
+### Карта пам’яті Ember
+
+| Регіон | Адреси включно | Байтів | Призначення |
+| --- | --- | ---: | --- |
+| CODE | `0x000`–`0x7FF` | 2048 | Інструкції, початковий `PC = 0x000` |
+| DATA | `0x800`–`0x9FF` | 512 | Дані гостя |
+| VRAM | `0xA00`–`0xAFF` | 256 | 64×32 пікселі, 1 біт на піксель |
+| Запас | `0xB00`–`0xBFF` | 256 | Звичайні байти в цій реалізації. ISA передбачає необов’язкові `PORT_OUT` за `0xB00` і `TICKS` за `0xB01` |
+| HEAP | `0xC00`–`0xEFF` | 768 | Зарезервовано під купу гостя, напрямок до старших адрес |
+| STACK | `0xF00`–`0xFFF` | 256 | Зарезервовано під стек гостя, напрямок від `0xFFF` до молодших адрес |
+
+Гостьова пам’ять містить 4096 байтів. Регіони задають призначення адрес, а `LOAD` і `STORE` перевіряють загальний діапазон пам’яті. Купа C++ у дослідах M3 належить процесу хоста.
+
+## M2. Спрайти
+
+- `sprite <i> <x> <y> <vx> <vy>` записує та активує один елемент масиву з 8 спрайтів. Індекс **0–7**, координати **0–63** і **0–31**, швидкості **−127…127** пікселів за крок. Значення `−128` відхиляється, бо його протилежне `+128` не вміщується в `int8_t`. Перевірки відбуваються до приведення типів і запису в масив.
+- `tick` без аргументів очищує VRAM через `clear()`, оновлює активні спрайти, ставить їхні пікселі через `plot()` і виводить кадр через `show()`. Координати обчислюються в `int`. На межі напрямок змінюється, а залишок кроку після удару відбивається всередину. Кожна вісь обробляється окремо, зокрема при ударі в кут.
+
+У [перевіреному сценарії](checks/lab-06-sprites.txt) команди `sprite 0 1 1 -1 -1` і `sprite 7 62 30 1 1` дають такі кадри. У таблиці наведено координати символів `#`, зчитані з виводу `tick`.
+
+| Кадр | Спрайт 0 | Спрайт 7 |
+| --- | --- | --- |
+| 1 | (0, 0), удар у ліву та верхню межі | (63, 31), удар у праву та нижню межі |
+| 2 | (1, 1) | (62, 30) |
+| 3 | (2, 2) | (61, 29) |
+
+## M3. Час життя й санітайзери
+
+У `lab06_notes` надруковано адреси статичного, автоматичного і динамічного об’єктів. Спочатку деструктор спрацював при виході з локального блока. На той момент об’єкт із `new` ще був доступний, його деструктор спрацював у `delete`. Деструктор статичного об’єкта спрацював після повернення з `main`. Додатковий дослід створює `Sprite` через `std::make_unique`, тож його пам’ять звільняється при виході власника з блока.
+
+У додатковому досліді `Value` містить однобайтовий тег `Kind` і значення `bits`. Виміряно `sizeof(Value) = 4`, `alignof(Value) = 2`, зсуви `kind = 0` і `bits = 2`. Тег `Addr` визначає, що `0x800` слід прочитати як адресу 2048. У `union Payload` поля `byte` та `address` використовують одну ділянку пам’яті, `sizeof(Payload) = 2`. Активне поле має відстежувати код, який використовує об’єднання.
+
+Кожен випадок запущено окремим процесом `lab06_heap_unsafe`. Повні [звіти ASan](evidence/lab-06-sanitizers.txt) збережено зі скороченими шляхами. Витяги з фактичного виводу
+
+```text
+SUMMARY: AddressSanitizer: heap-use-after-free tests\lab06_heap.cpp:28 in main
+SUMMARY: AddressSanitizer: double-free tests\lab06_heap.cpp:32 in main
+==19272==AddressSanitizer: detect_leaks is not supported on this platform.
+```
+
+| Дослід | Фактичний результат | Виправлення у `lab06_heap_fixed` |
+| --- | --- | --- |
+| Читання після звільнення | ASan виявив читання 4 байтів через завислий вказівник. Код виходу 1 | Читати до `delete`, після звільнення занулити вказівник |
+| Подвійне звільнення | ASan виявив другий `delete` для тієї самої адреси. Код виходу 1 | Звільнити об’єкт один раз. Після занулення `delete nullptr` безпечний |
+| Витік | З `detect_leaks=0` дослід надрукував значення виділеного об’єкта й завершився з кодом 0. З `detect_leaks=1` ASan повідомив про обмеження під час запуску, код 1 | Виконати `delete` до втрати останнього вказівника. Без нього об’єкт залишається виділеним, а програма втрачає можливість його звільнити |
+
+MSVC ігнорує параметр `/fsanitize=leak` з попередженням `D9002`, а `wsl --list --verbose` повернув код 1 і повідомив, що WSL не встановлено. Звіт LeakSanitizer про витік у цьому середовищі відсутній. Усі три виправлені варіанти завершилися з кодом 0 і порожнім stderr при доступних перевірках ASan.
+
+## Збірка й перевірки Lab 06
+
+Команди для Developer PowerShell з CMake і MSVC.
+
+```powershell
+cmake -S . -B build/lab06 -G 'Visual Studio 18 2026' -A x64 -DEMBER_MSVC_ASAN=ON
+cmake --build build/lab06 --config Debug
+ctest --test-dir build/lab06 -C Debug --output-on-failure
+Get-Content checks/lab-06-sprites.txt | ./build/lab06/Debug/ember.exe
+./build/lab06/Debug/lab06_notes.exe
+```
+
+Для ізольованих дослідів зібрати окрему ціль командою `cmake --build build/lab06 --config Debug --target lab06_heap_unsafe`. Виконуваний файл приймає один аргумент `use-after-free`, `double-free` або `leak`. Спосіб перевірки витоку з увімкненим детектором: `cmake -E env ASAN_OPTIONS=detect_leaks=1 ./build/lab06/Debug/lab06_heap_unsafe.exe leak`.
+
+Початковий CTest пройшов **32/32**, підсумковий CTest після збірки MSVC x64 Debug з `/fsanitize=address` — **38/38**. Усі п’ять офіційних сценаріїв Lab 01–05 пройшли. Порівняння повного виводу 21 сценарію Lab 01–05 показало збіг після вилучення першого рядка з версією. Додатково `PLOT (0,1)` дав `0x80` за адресою `0xA08`.
+
+Нові тести звірили 36 підтримуваних опкодів і їхні довжини з ISA та перевірили відмову на інших 220 байтах. Перевірки спрайтів охопили всі чотири межі, кілька відбиттів за крок, нерухомий та неактивний спрайти, одночасний рух, повні кадри, некоректні аргументи та збереження всіх байтів за межами VRAM. Окремі тести запустили досліди Notes і три виправлені варіанти роботи з купою.
+
 # Ember — Lab 05 «Багато однакового», Standard, M1–M5
 
 Навчальна машина C++17 має 4096 байтів пам’яті. Lab 05 додає екран 64×32, друк C-рядків гостя та демонстрацію пошуку в даних і відеопам’яті. Попередня робота описана в [звіті Lab 04](#ember--lab-04-форма-керування-standard-m1m4).
@@ -9,7 +96,7 @@
 PowerShell, Visual Studio 18 2026, MSVC x64 Debug з AddressSanitizer.
 
 ```powershell
-$cmake = 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+$cmake = (Get-Command cmake).Source
 $ctest = Join-Path (Split-Path $cmake) 'ctest.exe'
 & $cmake -S . -B build -G 'Visual Studio 18 2026' -A x64
 & $cmake --build build --config Debug
@@ -221,7 +308,7 @@ bubble 3=1 3 2 4
 PowerShell, Visual Studio 18 2026, x64 MSVC:
 
 ```powershell
-$cmake = 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+$cmake = (Get-Command cmake).Source
 $ctest = Join-Path (Split-Path $cmake) 'ctest.exe'
 & $cmake -S . -B build -G 'Visual Studio 18 2026' -A x64
 & $cmake --build build --config Debug
