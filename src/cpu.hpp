@@ -9,6 +9,7 @@ const Byte OP_HALT = 0x00;
 const Byte OP_NOP  = 0x01;
 const Byte OP_OUT  = 0x02;
 const Byte OP_OUTN = 0x03;
+const Byte OP_OUTS = 0x04;
 const Byte OP_ADD  = 0x10;
 const Byte OP_SUB  = 0x11;
 const Byte OP_AND  = 0x12;
@@ -37,6 +38,9 @@ const Byte OP_HLOW    = 0x2D;
 const Byte OP_JMP     = 0x30;
 const Byte OP_JZ      = 0x31;
 const Byte OP_JNZ     = 0x32;
+const Byte OP_CLS     = 0x40;
+const Byte OP_PLOT    = 0x41;
+const Byte OP_SHOW    = 0x43;
 
 struct Flags {
     bool z = false;   // результат нульовий

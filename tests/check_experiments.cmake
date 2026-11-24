@@ -11,6 +11,23 @@ elseif(CHECK STREQUAL "control_experiments")
     set(expected "A\nAB\nB\nBA\nnull guard=0\nlogical=1 bitwise=0\n12\nif one\nelse nonzero\nwhile=0\ndo-while=1\nfor=0 1 2 \nwhile countdown=3 2 1 \n")
 elseif(CHECK STREQUAL "scope_experiments")
     set(expected "10 1\n1\n1 1\n2 1\n3 1\n")
+elseif(CHECK STREQUAL "lab05_notes")
+    string(CONCAT expected
+        "sizeof array=12 pointer=${POINTER_SIZE}\n"
+        "index and pointer=2 2\nmatrix and flat=6 6\n"
+        "string bytes=65 66 0\nstring=AB digit=3\n"
+        "bubble 1=1 4 3 2\nbubble 2=1 3 4 2\nbubble 3=1 3 2 4\n")
+elseif(CHECK STREQUAL "lab05_frame")
+    string(REPEAT "#" 64 edge)
+    string(REPEAT "." 62 middle)
+    string(REPEAT "#${middle}#\n" 30 sides)
+    string(FIND "${output}" "${edge}\n${sides}${edge}\n" screen)
+    string(FIND "${output}" "0a00  ff ff ff ff ff ff ff ff 80 00 00 00 00 00 00 01" top)
+    string(FIND "${output}" "0af0  80 00 00 00 00 00 00 01 ff ff ff ff ff ff ff ff" bottom)
+    if(NOT screen EQUAL 0 OR top EQUAL -1 OR bottom EQUAL -1)
+        message(FATAL_ERROR "${CHECK}: incorrect frame or framebuffer dump")
+    endif()
+    return()
 else()
     message(FATAL_ERROR "Unknown experiment ${CHECK}")
 endif()

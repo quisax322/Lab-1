@@ -30,34 +30,44 @@ else()
     add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
 endif()
 
-add_executable(ember
-    src/main.cpp
+set(ember_core_sources
     src/memory.cpp
-    src/dump.cpp
     src/alu.cpp
     src/cpu.cpp
+    src/display.cpp
 )
+add_executable(ember src/main.cpp src/dump.cpp ${ember_core_sources})
 
 include(CTest)
 if(BUILD_TESTING)
     add_executable(ember_tests tests/test_ember.cpp
-                   src/alu.cpp src/cpu.cpp src/memory.cpp)
+                   ${ember_core_sources})
     target_include_directories(ember_tests PRIVATE src)
     add_test(NAME alu_cpu_memory COMMAND ember_tests)
 
-    add_executable(lab03_tests tests/test_lab03.cpp src/alu.cpp src/cpu.cpp src/memory.cpp)
+    add_executable(lab03_tests tests/test_lab03.cpp ${ember_core_sources})
     target_include_directories(lab03_tests PRIVATE src)
     add_test(NAME lab03_memory_cpu COMMAND lab03_tests)
 
-    add_executable(lab04_tests tests/test_lab04.cpp src/alu.cpp src/cpu.cpp src/memory.cpp)
+    add_executable(lab04_tests tests/test_lab04.cpp ${ember_core_sources})
     target_include_directories(lab04_tests PRIVATE src)
     add_test(NAME lab04_control_search COMMAND lab04_tests)
 
-    foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments)
+    add_executable(lab05_tests tests/test_lab05.cpp ${ember_core_sources})
+    target_include_directories(lab05_tests PRIVATE src)
+    add_test(NAME lab05_display_strings COMMAND lab05_tests)
+
+    add_executable(lab05_frame examples/lab05_frame.cpp src/display.cpp src/dump.cpp)
+    target_include_directories(lab05_frame PRIVATE src)
+    foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments lab05_notes)
         add_executable(${experiment} tests/${experiment}.cpp)
+    endforeach()
+    foreach(experiment IN ITEMS assignment_experiment control_experiments scope_experiments
+                                lab05_notes lab05_frame)
         add_test(NAME ${experiment}
             COMMAND ${CMAKE_COMMAND} -DEXPERIMENT=$<TARGET_FILE:${experiment}>
                 -DCHECK=${experiment} -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                -DPOINTER_SIZE=${CMAKE_SIZEOF_VOID_P}
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_experiments.cmake)
     endforeach()
     # Only this isolated Notes experiment allows assignment-in-condition warnings.
@@ -80,11 +90,14 @@ if(BUILD_TESTING)
     add_executable(asan_oob EXCLUDE_FROM_ALL tests/asan_oob.cpp)
     target_include_directories(asan_oob PRIVATE src)
     target_compile_definitions(asan_oob PRIVATE EMBER_ASAN_DEMO_UNSAFE)
+    add_executable(lab05_asan_unterminated EXCLUDE_FROM_ALL tests/lab05_notes.cpp)
+    target_compile_definitions(lab05_asan_unterminated PRIVATE EMBER_ASAN_DEMO_UNSAFE)
 
     foreach(check IN ITEMS lab-01 lab-02 lab-02-and lab-02-trace lab-02-input
                            lab-03 lab-03-h lab-03-trace lab-03-absolute lab-03-word lab-03-limit
                            lab-04 lab-04-trace lab-04-find lab-04-search-found lab-04-search-missing
-                           lab-04-unknown lab-04-limit)
+                           lab-04-unknown lab-04-limit
+                           lab-05 lab-05-pixels lab-05-hello)
         add_test(NAME ${check}
             COMMAND ${CMAKE_COMMAND}
                 -DEMBER=$<TARGET_FILE:ember>
@@ -97,7 +110,8 @@ endif()
 
 if(MSVC AND EMBER_MSVC_ASAN)
     foreach(target IN ITEMS ember ember_tests lab03_tests pointer_experiments bounds_fixed asan_oob
-                            lab04_tests assignment_experiment control_experiments scope_experiments)
+                            lab04_tests assignment_experiment control_experiments scope_experiments
+                            lab05_tests lab05_frame lab05_notes lab05_asan_unterminated)
         if(TARGET ${target})
             add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different

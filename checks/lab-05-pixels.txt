@@ -1,0 +1,47 @@
+set 0 0x40
+set 1 0x20
+set 2 0
+set 3 0x21
+set 4 0
+set 5 0x41
+set 6 0x20
+set 7 13
+set 8 0x21
+set 9 2
+set 10 0x41
+set 11 0x20
+set 12 63
+set 13 0x21
+set 14 31
+set 15 0x41
+set 16 0x43
+set 17 0x00
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+step
+regs
+show
+find 0xA00 0xB00 0x80
+find 0xA00 0xB00 0xFF
+quit

@@ -10,9 +10,10 @@
 #include <sstream>
 #include <string>
 
+#include "cpu.hpp"
+#include "display.hpp"
 #include "dump.hpp"
 #include "memory.hpp"
-#include "cpu.hpp"
 
 // Turn a word into a number. Accepts decimal (65) and hex (0x41).
 // Returns false if the word is not a number at all.
@@ -30,6 +31,7 @@ static bool parse_number(const std::string& word, long& out) {
 static void print_help() {
     std::cout << "commands:\n"
               << "  dump              print all " << MEM_SIZE << " bytes\n"
+              << "  show              draw the 64x32 screen\n"
               << "  get <addr>        show one byte four ways\n"
               << "  set <addr> <val>  write one byte (dec or 0x hex)\n"
               << "  get16 <addr>      read a little-endian word\n"
@@ -49,7 +51,7 @@ int main() {
     CPU cpu;
     cpu.mem = &mem;
 
-    std::cout << "ember 0.4 - conditions, loops and search. Type `help`.\n";
+    std::cout << "ember 0.5 - arrays, strings and display. Type `help`.\n";
 
     std::string line;
     while (true) {
@@ -75,6 +77,8 @@ int main() {
             print_help();
         } else if (cmd == "dump") {
             dump(mem);
+        } else if (cmd == "show") {
+            show(mem);
         } else if (cmd == "regs") {
             dump_regs(cpu);
         } else if (cmd == "step") {

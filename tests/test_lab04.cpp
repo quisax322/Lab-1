@@ -65,10 +65,11 @@ static void branches() {
             require(cpu.error != nullptr && cpu.pc == start, "truncated branch even if not taken");
         }
     }
-    // All unsupported bytes, including opcodes reserved for Labs 05-08, fault.
+    // All unsupported bytes, including opcodes reserved for Labs 06-08, fault.
     for (unsigned op = 0; op < 256; ++op) {
-        const bool known = op <= 3 || (op >= 0x10 && op <= 0x1A) ||
-                           (op >= 0x20 && op <= 0x2D) || (op >= 0x30 && op <= 0x32);
+        const bool known = op <= 0x04 || (op >= 0x10 && op <= 0x1A) ||
+                           (op >= 0x20 && op <= 0x2D) || (op >= 0x30 && op <= 0x32) ||
+                           op == 0x40 || op == 0x41 || op == 0x43;
         if (known) continue;
         Memory mem; mem.data[0] = static_cast<Byte>(op);
         CPU cpu; cpu.mem = &mem; cpu.a = 7; cpu.b = 8; cpu.h = 9; cpu.f = {true,true,true};
@@ -149,7 +150,7 @@ int main() {
     std::ostringstream diagnostics; auto* saved = std::cout.rdbuf(diagnostics.rdbuf());
     compare(); branches(); search();
     std::cout.rdbuf(saved);
-    require(diagnostics.str().find("unknown opcode 0x04") != std::string::npos &&
+    require(diagnostics.str().find("unknown opcode 0x05") != std::string::npos &&
             diagnostics.str().find("unknown opcode 0xff") != std::string::npos, "two-digit unknown diagnostics");
     countdown();
     std::cout << "PASS Lab 04: " << checks << " checks\n";

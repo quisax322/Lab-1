@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "alu.hpp"
+#include "display.hpp"
 
 static void fault(CPU& cpu, const char* message) {
     cpu.error = message;
@@ -29,7 +30,7 @@ void step(CPU& cpu) {
     if (op == OP_LOADI_A || op == OP_LOADI_B) {
         length = 2;
     } else if ((op >= OP_LOAD_A && op <= OP_STORE_B) || op == OP_LOADH ||
-               op == OP_JMP || op == OP_JZ || op == OP_JNZ) {
+               op == OP_JMP || op == OP_JZ || op == OP_JNZ || op == OP_OUTS) {
         length = 3;
     }
     if (length > MEM_SIZE - cpu.pc) {
@@ -56,6 +57,16 @@ void step(CPU& cpu) {
         const auto saved_flags = std::cout.flags();
         std::cout << std::dec << static_cast<unsigned>(cpu.a) << ' ';
         std::cout.flags(saved_flags);
+        break;
+    }
+    case OP_OUTS: {
+        std::size_t addr = get16(*cpu.mem, cpu.pc + 1);
+        constexpr std::size_t max_bytes = 256;
+        for (std::size_t count = 0; count < max_bytes && addr < MEM_SIZE; ++count, ++addr) {
+            const Byte value = mem_get(*cpu.mem, addr);
+            if (value == 0) break;
+            std::cout.put(static_cast<char>(value));
+        }
         break;
     }
     case OP_ADD: cpu.a = alu_add(cpu.a, cpu.b, cpu.f); break;
@@ -99,6 +110,9 @@ void step(CPU& cpu) {
         }
         break;
     }
+    case OP_CLS: clear(*cpu.mem); break;
+    case OP_PLOT: cpu.f.c = !plot(*cpu.mem, cpu.a, cpu.b); break;
+    case OP_SHOW: show(*cpu.mem); break;
     default: {
         cpu.error = "unknown opcode";
         const auto saved_flags = std::cout.flags();
